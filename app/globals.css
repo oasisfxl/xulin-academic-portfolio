@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --background: #070707;
+  --foreground: #eeeeef;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(170, 183, 207, 0.14), transparent 32rem),
+    radial-gradient(circle at 88% 12%, rgba(200, 183, 138, 0.1), transparent 24rem),
+    linear-gradient(180deg, #0b0b0d 0%, #070707 48%, #0e0d0b 100%);
+  color: var(--foreground);
+  font-family: Inter, Geist, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: 0;
+}
+
+::selection {
+  background: rgba(170, 183, 207, 0.28);
+  color: #ffffff;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.page-shell {
+  width: min(1120px, calc(100% - 40px));
+  margin-inline: auto;
+}
+
+.album-mask {
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 8%,
+    #000 92%,
+    transparent 100%
+  );
+}
+
+.album-rail {
+  will-change: transform;
+}
+
+.album-cover-noise::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 36px 36px;
+  opacity: 0.12;
+  mix-blend-mode: soft-light;
+}
+
+.album-stage {
+  --album-card-size: clamp(112px, 31vw, 150px);
+  --album-ring-radius: min(92vw, 420px);
+  perspective: 1300px;
+}
+
+.album-ring-card,
+.album-orbit-card {
+  width: var(--album-card-size);
+  height: var(--album-card-size);
+  margin-left: calc(var(--album-card-size) / -2);
+  margin-top: calc(var(--album-card-size) / -2);
+  transform-style: preserve-3d;
+  transition:
+    opacity 260ms ease,
+    filter 260ms ease;
+}
+
+.album-orbit-card > button {
+  backface-visibility: hidden;
+}
+
+@media (min-width: 640px) {
+  .album-stage {
+    --album-card-size: clamp(142px, 14vw, 184px);
+    --album-ring-radius: min(58vw, 640px);
+    perspective: 1600px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .album-stage {
+    --album-card-size: clamp(158px, 11.8vw, 196px);
+    --album-ring-radius: min(54vw, 720px);
+    perspective: 1900px;
+  }
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
