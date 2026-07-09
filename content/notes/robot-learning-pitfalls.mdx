@@ -1,0 +1,41 @@
+---
+title: "Robot Learning Pitfalls"
+subtitle: "Debugging patterns for imitation learning"
+summary: "A field note for diagnosing dataset, policy, and evaluation bugs in robot learning experiments."
+date: "2026-07-10"
+updated: "2026-07-10"
+visibility: "public"
+tags:
+  - Debugging
+  - Imitation Learning
+  - Evaluation
+relatedProjects:
+  - robot-learning-pitfalls
+---
+
+## Debugging Order
+
+When an imitation learning run fails, inspect the pipeline in this order:
+
+1. Dataset contract.
+2. Observation availability.
+3. Action normalization.
+4. Evaluation reset logic.
+5. Model capacity.
+
+## Dataset Contract
+
+The first failure mode is often a quiet mismatch between what the loader thinks the data means and what the policy actually receives.
+
+```ts
+type EpisodeCheck = {
+  observationKeys: string[];
+  actionShape: number[];
+  frameRate: number;
+  hasTerminalFlag: boolean;
+};
+```
+
+## Failure Clips
+
+For deployment work, keep short clips for representative failures. One failure video with a precise caption can save hours of log reading.

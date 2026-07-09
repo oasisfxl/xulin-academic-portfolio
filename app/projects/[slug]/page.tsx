@@ -1,3 +1,5 @@
+import { MdxContent } from "@/components/mdx/MdxContent";
+import { getContentBySlug } from "@/lib/content";
 import {
   getPublicProjectBySlug,
   getPublicProjects,
@@ -24,6 +26,7 @@ export async function generateMetadata({
 }: ProjectPageProps): Promise<Metadata> {
   const { slug } = await params;
   const project = getPublicProjectBySlug(slug);
+  const doc = getContentBySlug("projects", slug);
 
   if (!project) {
     return {
@@ -32,21 +35,24 @@ export async function generateMetadata({
   }
 
   return {
-    title: project.title,
-    description: project.description,
+    title: doc?.meta.title || project.title,
+    description: doc?.meta.summary || project.description,
   };
 }
 
 export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   const { slug } = await params;
   const project = getPublicProjectBySlug(slug);
-  const links = Object.entries(project?.links ?? {}).filter(
-    (entry): entry is [string, string] => Boolean(entry[1])
-  );
 
   if (!project) {
     notFound();
   }
+
+  const doc = getContentBySlug("projects", slug);
+  const shouldRenderDoc = doc?.meta.visibility === "public";
+  const links = Object.entries(project.links ?? {}).filter(
+    (entry): entry is [string, string] => Boolean(entry[1])
+  );
 
   return (
     <article className="page-shell py-20">
@@ -63,13 +69,13 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
             {project.year} / {project.type}
           </p>
           <h1 className="mt-5 text-balance text-5xl font-medium leading-tight text-white sm:text-7xl">
-            {project.title}
+            {doc?.meta.title || project.title}
           </h1>
           <p className="mt-5 text-xl leading-8 text-white/62">
-            {project.subtitle}
+            {doc?.meta.subtitle || project.subtitle}
           </p>
           <p className="mt-10 max-w-3xl text-lg leading-9 text-white/68">
-            {project.description}
+            {doc?.meta.summary || project.description}
           </p>
         </div>
 
@@ -100,20 +106,18 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         </aside>
       </div>
 
-      <section className="mt-20 grid gap-8 border-t border-white/[0.08] pt-10 lg:grid-cols-[0.28fr_minmax(0,0.72fr)]">
-        <h2 className="text-sm uppercase text-white/40">Notes</h2>
-        <div className="space-y-6 text-base leading-8 text-white/62">
-          <p>
-            This page is intentionally lightweight for the first version. It is
-            ready for method diagrams, experiment logs, paper links, videos, and
-            reproducibility notes as the project matures.
-          </p>
-          <p>
-            Future updates can add hardware setup, dataset notes, training
-            curves, ablations, and deployment videos without changing the site
-            structure.
-          </p>
-        </div>
+      <section className="mt-20 grid gap-8 border-t border-white/[0.08] pt-10 lg:grid-cols-[0.22fr_minmax(0,0.78fr)]">
+        <h2 className="text-sm uppercase text-white/40">Document</h2>
+        {shouldRenderDoc ? (
+          <MdxContent source={doc.source} />
+        ) : (
+          <div className="space-y-6 text-base leading-8 text-white/62">
+            <p>
+              This public detail page is ready for a full MDX writeup. Add one
+              at <code>content/projects/{project.slug}.mdx</code>.
+            </p>
+          </div>
+        )}
       </section>
 
       {links.length > 0 ? (

@@ -90,7 +90,7 @@ export const projects: Project[] = [
       "Technical notes connecting flow matching intuition, trajectory distributions, and how continuous-time generative models can shape robot policy learning.",
     tags: ["Flow Matching", "Diffusion Policy", "Notes", "Generative Models"],
     links: {
-      note: "/projects/flow-matching-notes",
+      note: "/notes/flow-matching-notes",
     },
   },
   {
@@ -106,7 +106,7 @@ export const projects: Project[] = [
       "A practical checklist of common robot learning traps, including silent dataset bugs, observation leakage, brittle evaluation, and deployment mismatch.",
     tags: ["Robot Learning", "Debugging", "Imitation Learning", "Evaluation"],
     links: {
-      note: "/projects/robot-learning-pitfalls",
+      note: "/notes/robot-learning-pitfalls",
     },
   },
   {

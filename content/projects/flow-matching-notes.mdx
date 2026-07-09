@@ -1,0 +1,35 @@
+---
+title: "Flow Matching Notes"
+subtitle: "A concise map from generative modeling to robot policy learning"
+summary: "Technical notes connecting flow matching intuition, trajectory distributions, and how continuous-time generative models can shape robot policy learning."
+year: "2025"
+status: "Published"
+visibility: "public"
+tags:
+  - Flow Matching
+  - Diffusion Policy
+  - Notes
+  - Generative Models
+---
+
+## Core Question
+
+Flow matching provides a useful lens for thinking about distributions over trajectories. For robot learning, the practical question is how this modeling view interacts with control horizons, action smoothness, multimodal demonstrations, and deployment-time feedback.
+
+<Callout title="Research angle" type="idea">
+The useful bridge is not just generation quality. It is whether the learned vector field makes policy behavior easier to inspect, constrain, and deploy.
+</Callout>
+
+## Working Map
+
+1. Define the trajectory or action distribution.
+2. Choose a path between noise and data.
+3. Train a vector field to match the path velocity.
+4. Integrate the learned field during inference.
+5. Evaluate whether generated actions remain stable under real observations.
+
+## Open Questions
+
+- How should conditioning be structured for long-horizon manipulation?
+- Which failures are caused by generative modeling, and which are caused by robot data quality?
+- Can flow-based policies expose useful uncertainty signals for deployment?

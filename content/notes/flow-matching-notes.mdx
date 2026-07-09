@@ -1,0 +1,32 @@
+---
+title: "Flow Matching Notes"
+subtitle: "Generative trajectory modeling for robot policies"
+summary: "A compact note on how flow matching ideas connect to robot policy learning, trajectory distributions, and deployment constraints."
+date: "2026-07-10"
+updated: "2026-07-10"
+visibility: "public"
+tags:
+  - Flow Matching
+  - Robot Learning
+  - Generative Models
+relatedProjects:
+  - flow-matching-notes
+---
+
+## Mental Model
+
+Flow matching can be read as learning a vector field that transports a simple distribution into the data distribution. In robot learning, the data distribution may represent actions, action chunks, or longer trajectory fragments.
+
+## Why It Matters For Robots
+
+Robot policies need more than plausible samples. They need temporal smoothness, robustness to observation shift, and predictable behavior when the scene is not exactly like the dataset.
+
+<Callout title="Note to self" type="note">
+When writing future updates, compare the modeling assumption with the robot deployment assumption. The mismatch is usually where the interesting failure happens.
+</Callout>
+
+## Next Additions
+
+- Diagram of the path between noise and action trajectories.
+- Comparison with diffusion policy sampling.
+- Notes on conditioning and control frequency.

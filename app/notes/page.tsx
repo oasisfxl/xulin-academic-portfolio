@@ -1,5 +1,5 @@
-import { ProjectList } from "@/components/ProjectList";
-import { getVisibleProjects } from "@/lib/projects";
+import { NoteList } from "@/components/NoteList";
+import { getVisibleContent } from "@/lib/content";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default function NotesPage() {
-  const notes = getVisibleProjects().filter((project) => project.type === "Note");
+  const notes = getVisibleContent("notes");
 
   return (
     <section className="page-shell py-20">
@@ -19,11 +19,11 @@ export default function NotesPage() {
         </h1>
         <p className="mt-6 text-lg leading-8 text-white/58">
           Short technical writeups for robot learning, imitation learning,
-          evaluation practice, and generative policy ideas.
+          evaluation practice, generative policy ideas, and deployment logs.
         </p>
       </div>
       <div className="mt-16">
-        <ProjectList projects={notes} />
+        <NoteList notes={notes} />
       </div>
     </section>
   );

@@ -1,0 +1,39 @@
+---
+title: "Robot Learning Pitfalls"
+subtitle: "A field guide for debugging imitation learning experiments"
+summary: "A practical checklist of common robot learning traps, including silent dataset bugs, observation leakage, brittle evaluation, and deployment mismatch."
+year: "2025"
+status: "Published"
+visibility: "public"
+tags:
+  - Robot Learning
+  - Debugging
+  - Imitation Learning
+  - Evaluation
+---
+
+## Why This Exists
+
+Robot learning experiments often fail quietly. A model may train, logs may look stable, and evaluation may still be measuring the wrong thing. This note collects debugging patterns that are easy to forget when the pipeline becomes complex.
+
+## Common Pitfalls
+
+### Silent Dataset Bugs
+
+Small convention mismatches can dominate the result: camera order, joint index order, gripper sign, episode boundaries, or timestamp alignment.
+
+### Observation Leakage
+
+If the policy receives information that will not exist at deployment time, the evaluation can look strong while the real robot fails immediately.
+
+### Brittle Evaluation
+
+Single-seed rollouts and cherry-picked demos are useful for debugging, but not enough for claims. Track distributions of failures, not only success examples.
+
+<Callout title="Practical rule" type="warning">
+Before tuning model size, first verify the data contract, action scale, normalization path, and evaluation reset conditions.
+</Callout>
+
+## Video Failure Case Slot
+
+Short failure clips are often more useful than successful demos. Add them near the exact bug they illustrate.

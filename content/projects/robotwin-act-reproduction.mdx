@@ -1,0 +1,52 @@
+---
+title: "RoboTwin ACT Reproduction"
+subtitle: "Reproducing action chunking baselines in dual-arm simulation"
+summary: "A compact reproduction log for ACT-style imitation learning in RoboTwin, focusing on data handling, training stability, and task-level failure modes."
+year: "2026"
+status: "Reproduced"
+visibility: "public"
+tags:
+  - Imitation Learning
+  - ACT
+  - RoboTwin
+  - Reproduction
+relatedProjects:
+  - robot-learning-pitfalls
+---
+
+## Overview
+
+This page is a living reproduction log for ACT-style imitation learning in RoboTwin. The goal is not only to reproduce headline performance, but also to document the fragile parts of the pipeline: dataset conventions, action normalization, training stability, and evaluation mismatch.
+
+<Callout title="Writing status" type="note">
+This is an initial public skeleton. Detailed plots, command logs, and videos can be added as the reproduction record matures.
+</Callout>
+
+## Reproduction Checklist
+
+- Confirm task configuration and observation keys.
+- Verify action chunk size and temporal alignment.
+- Compare dataset statistics before training.
+- Track validation rollouts, not only training loss.
+- Save failure cases with short captions and timestamps.
+
+## Notes For Future Updates
+
+Use this section for concrete experiment logs. A good entry usually includes the commit hash, dataset version, command, hardware, key metrics, and a short interpretation.
+
+```bash
+npm run build
+# Replace this shell block with reproduction commands or analysis scripts.
+```
+
+## Video Demo Slot
+
+When a demo clip is ready, place a small compressed file in `public/videos/` or link to an external host, then embed it like this:
+
+```mdx
+<Video
+  src="/videos/robotwin-act-demo.mp4"
+  poster="/images/robotwin-act-poster.jpg"
+  caption="A rollout from the ACT reproduction."
+/>
+```
