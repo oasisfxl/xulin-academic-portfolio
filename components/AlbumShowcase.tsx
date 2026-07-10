@@ -58,8 +58,13 @@ function mod(value: number, divisor: number) {
 
 function coverStyle(project: Project, index: number): CSSProperties {
   if (project.cover) {
+    const overlay =
+      project.slug === "robust-humanoid-action-delay"
+        ? "linear-gradient(180deg, rgba(4,6,10,0.34), rgba(4,6,10,0.82))"
+        : "linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.42))";
+
     return {
-      backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.42)), url(${project.cover})`,
+      backgroundImage: `${overlay}, url(${project.cover})`,
       backgroundPosition: "center",
       backgroundSize: "cover",
     };

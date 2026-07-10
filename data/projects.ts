@@ -31,6 +31,27 @@ export type Project = {
 // hidden = excluded from all indexes and showcase surfaces
 export const projects: Project[] = [
   {
+    slug: "robust-humanoid-action-delay",
+    title: "Robust Humanoid Locomotion",
+    subtitle:
+      "动作时延下的鲁棒人形运动控制：延迟执行暴露与显式时延感知的因子化研究",
+    type: "Paper",
+    year: "2026",
+    status: "Published",
+    visibility: "public",
+    featured: true,
+    cover: "/covers/robust-humanoid-action-delay.png",
+    description:
+      "发表于 ICGNC 2026。本文以 Unitree G1 的 IsaacLab 速度跟踪任务为例，系统拆分并比较延迟执行暴露与显式时延条件，验证二者结合可在较大动作时延下获得最稳健的运动表现。",
+    tags: [
+      "Humanoid Locomotion",
+      "Action Delay",
+      "Reinforcement Learning",
+      "IsaacLab",
+      "Unitree G1",
+    ],
+  },
+  {
     slug: "sieve",
     title: "SIEVE",
     subtitle: "Structured evaluation for embodied robot learning systems",
