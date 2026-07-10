@@ -1,8 +1,11 @@
 "use client";
 
+import { useLanguage } from "@/components/LanguageProvider";
 import { motion } from "framer-motion";
 
 export function HomeHero() {
+  const { t } = useLanguage();
+
   return (
     <section className="page-shell flex flex-col justify-center py-7 sm:py-8">
       <motion.p
@@ -11,7 +14,7 @@ export function HomeHero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        Embodied Intelligence / Robot Learning
+        {t("hero.field")}
       </motion.p>
       <motion.h1
         className="mt-4 max-w-5xl text-5xl font-medium leading-none text-white sm:text-6xl lg:text-7xl"
@@ -28,14 +31,13 @@ export function HomeHero() {
         transition={{ delay: 0.18, duration: 0.58, ease: "easeOut" }}
       >
         <p className="max-w-2xl text-balance text-base leading-7 text-white/72 sm:text-lg sm:leading-8">
-          I build and analyze robot learning systems for deployable humanoid
-          manipulation.
+          {t("hero.tagline")}
         </p>
         <div className="grid gap-3 text-sm text-white/52 sm:grid-cols-2 md:grid-cols-1">
-          <p>Humanoid Manipulation</p>
-          <p>Imitation Learning</p>
-          <p>Policy Deployment</p>
-          <p>Robot Evaluation</p>
+          <p>{t("hero.humanoid")}</p>
+          <p>{t("hero.imitation")}</p>
+          <p>{t("hero.policy")}</p>
+          <p>{t("hero.evaluation")}</p>
         </div>
       </motion.div>
     </section>

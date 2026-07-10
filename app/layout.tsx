@@ -1,7 +1,9 @@
 import { Footer } from "@/components/Footer";
 import { GitHubFloatingButton } from "@/components/GitHubFloatingButton";
+import { LanguageProvider } from "@/components/LanguageProvider";
 import { LoadingIntro } from "@/components/LoadingIntro";
 import { Navbar } from "@/components/Navbar";
+import { PageTransition } from "@/components/PageTransition";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -22,11 +24,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <LoadingIntro />
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
-        <GitHubFloatingButton />
+        <LanguageProvider>
+          <LoadingIntro />
+          <Navbar />
+          <PageTransition>{children}</PageTransition>
+          <Footer />
+          <GitHubFloatingButton />
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -1,3 +1,4 @@
+import { PageIntro } from "@/components/PageIntro";
 import { ProjectList } from "@/components/ProjectList";
 import { getVisibleProjects } from "@/lib/projects";
 import type { Metadata } from "next";
@@ -14,16 +15,11 @@ export default function PublicationsPage() {
 
   return (
     <section className="page-shell py-20">
-      <div className="max-w-3xl">
-        <p className="text-sm uppercase text-antique/72">Publications</p>
-        <h1 className="mt-5 text-5xl font-medium text-white sm:text-7xl">
-          Papers and preprints
-        </h1>
-        <p className="mt-6 text-lg leading-8 text-white/58">
-          Formal research outputs and manuscripts connected to embodied
-          intelligence and humanoid manipulation.
-        </p>
-      </div>
+      <PageIntro
+        descriptionKey="publications.description"
+        eyebrowKey="publications.eyebrow"
+        titleKey="publications.title"
+      />
       <div className="mt-16">
         {publications.length > 0 ? (
           <ProjectList projects={publications} />
