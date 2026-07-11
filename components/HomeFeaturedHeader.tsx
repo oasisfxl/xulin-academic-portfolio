@@ -1,23 +1,22 @@
 "use client";
 
 import { useLanguage } from "@/components/LanguageProvider";
+import { motion } from "framer-motion";
 
 export function HomeFeaturedHeader() {
   const { t } = useLanguage();
 
   return (
-    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <p className="text-xs uppercase text-antique/72">
-          {t("homeProjects.eyebrow")}
-        </p>
-        <h2 className="mt-3 text-3xl font-medium text-white">
-          {t("homeProjects.title")}
-        </h2>
-      </div>
-      <p className="max-w-md text-sm leading-6 text-white/48">
-        {t("homeProjects.description")}
-      </p>
-    </div>
+    <motion.div
+      className="mb-4 border-b border-white/[0.08] pb-5"
+      initial={{ opacity: 0, y: 14 }}
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      viewport={{ once: true, margin: "-80px" }}
+      whileInView={{ opacity: 1, y: 0 }}
+    >
+      <h2 className="text-3xl font-medium text-white">
+        {t("homeProjects.title")}
+      </h2>
+    </motion.div>
   );
 }

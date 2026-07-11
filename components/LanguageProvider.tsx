@@ -23,17 +23,9 @@ type TranslationKey =
   | "hero.imitation"
   | "hero.policy"
   | "hero.evaluation"
-  | "showcase.eyebrow"
-  | "showcase.title"
-  | "showcase.instruction"
-  | "showcase.select"
-  | "showcase.open"
-  | "showcase.comingSoon"
   | "showcase.return"
   | "showcase.locked"
-  | "homeProjects.eyebrow"
   | "homeProjects.title"
-  | "homeProjects.description"
   | "projects.eyebrow"
   | "projects.title"
   | "projects.description"
@@ -67,20 +59,10 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "hero.imitation": "Imitation Learning",
     "hero.policy": "Policy Deployment",
     "hero.evaluation": "Robot Evaluation",
-    "showcase.eyebrow": "Featured project records",
-    "showcase.title": "Rotating research archive",
-    "showcase.instruction":
-      "Drag with momentum, choose a cover, then open the project from the preview.",
-    "showcase.select": "Select cover",
-    "showcase.open": "Open project",
-    "showcase.comingSoon": "Coming soon",
     "showcase.return": "Return to ring",
     "showcase.locked":
       "This project is currently being refined. A full detail page will be published when the writeup is ready.",
-    "homeProjects.eyebrow": "Featured Projects",
     "homeProjects.title": "Selected work",
-    "homeProjects.description":
-      "A readable index for papers, reproductions, notes, and deployment experiments.",
     "projects.eyebrow": "Projects",
     "projects.title": "Research index",
     "projects.description":
@@ -118,19 +100,9 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "hero.imitation": "模仿学习",
     "hero.policy": "策略部署",
     "hero.evaluation": "机器人评测",
-    "showcase.eyebrow": "代表性研究项目",
-    "showcase.title": "旋转研究档案",
-    "showcase.instruction":
-      "拖动展架选择封面，点击放大预览，再次点击进入项目详情。",
-    "showcase.select": "选择封面",
-    "showcase.open": "打开项目",
-    "showcase.comingSoon": "完善中",
     "showcase.return": "返回展架",
     "showcase.locked": "该项目仍在完善中，完整详情页会在文档完成后开放。",
-    "homeProjects.eyebrow": "精选项目",
     "homeProjects.title": "研究索引",
-    "homeProjects.description":
-      "论文、复现、技术笔记与部署实验的可读项目列表。",
     "projects.eyebrow": "项目",
     "projects.title": "研究项目索引",
     "projects.description":

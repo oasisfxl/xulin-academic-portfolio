@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
+import type { ProjectCoverTone } from "@/data/projects";
 
 export type ContentKind = "projects" | "notes";
 export type ContentVisibility = "public" | "locked" | "hidden";
@@ -18,6 +19,15 @@ export type ContentMeta = {
   tags: string[];
   cover?: string;
   relatedProjects?: string[];
+  type?: "Paper" | "Reproduction" | "Project" | "Note" | "Experiment";
+  featured?: boolean;
+  coverTone?: ProjectCoverTone;
+  links?: {
+    paper?: string;
+    code?: string;
+    demo?: string;
+    note?: string;
+  };
 };
 
 export type ContentDocument = {
@@ -39,6 +49,37 @@ function asStringArray(value: unknown) {
 
 function asVisibility(value: unknown): ContentVisibility {
   return value === "locked" || value === "hidden" ? value : "public";
+}
+
+function asBoolean(value: unknown) {
+  if (value === true || value === "true") return true;
+  if (value === false || value === "false") return false;
+  return undefined;
+}
+
+function asCoverTone(value: unknown): ProjectCoverTone | undefined {
+  return value === "antique" || value === "iris" || value === "sage" || value === "pearl"
+    ? value
+    : value === "mist" ? value : undefined;
+}
+
+function asType(value: unknown, kind: ContentKind): ContentMeta["type"] {
+  const valid = ["Paper", "Reproduction", "Project", "Note", "Experiment"];
+  return valid.includes(String(value))
+    ? (String(value) as ContentMeta["type"])
+    : kind === "notes" ? "Note" : "Project";
+}
+
+function asLinks(value: unknown): ContentMeta["links"] {
+  if (!value || typeof value !== "object") return undefined;
+  const input = value as Record<string, unknown>;
+  const links = {
+    paper: asString(input.paper),
+    code: asString(input.code),
+    demo: asString(input.demo),
+    note: asString(input.note),
+  };
+  return Object.values(links).some(Boolean) ? links : undefined;
 }
 
 function toSlug(filePath: string) {
@@ -100,6 +141,10 @@ function parseDocument(kind: ContentKind, file: string): ContentDocument {
       tags: asStringArray(parsed.data.tags),
       cover: asString(parsed.data.cover),
       relatedProjects: asStringArray(parsed.data.relatedProjects),
+      type: asType(parsed.data.type, kind),
+      featured: asBoolean(parsed.data.featured),
+      coverTone: asCoverTone(parsed.data.coverTone),
+      links: asLinks(parsed.data.links),
     },
     source: parsed.content.trim(),
   };

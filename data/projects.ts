@@ -1,4 +1,5 @@
 export type ProjectVisibility = "public" | "locked" | "hidden";
+export type ProjectCoverTone = "mist" | "antique" | "iris" | "sage" | "pearl";
 
 export type Project = {
   slug: string;
@@ -15,6 +16,7 @@ export type Project = {
   visibility: ProjectVisibility;
   featured: boolean;
   cover?: string;
+  coverTone?: ProjectCoverTone;
   description: string;
   tags: string[];
   links?: {

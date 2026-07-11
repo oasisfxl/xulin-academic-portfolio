@@ -3,7 +3,7 @@
 import { ComingSoonModal } from "@/components/ComingSoonModal";
 import { useLanguage } from "@/components/LanguageProvider";
 import { Project } from "@/data/projects";
-import { projectHref } from "@/lib/projects";
+import { projectHref } from "@/lib/project-routing";
 import {
   AnimatePresence,
   animate,
@@ -33,13 +33,13 @@ type ShowcaseMode = "ring" | "preview";
 type PreviewPhase = "opening" | "open" | "closing";
 type CoverRect = { x: number; y: number; width: number; height: number };
 
-const coverGradients = [
-  "linear-gradient(135deg, #d6dae5 0%, #6d7891 34%, #1b1b20 72%, #080808 100%)",
-  "linear-gradient(135deg, #d6c28d 0%, #6d6558 32%, #151516 70%, #080808 100%)",
-  "linear-gradient(135deg, #b7a9d7 0%, #58647e 36%, #15161a 72%, #090909 100%)",
-  "linear-gradient(135deg, #bdd1ce 0%, #687482 35%, #171614 70%, #090908 100%)",
-  "linear-gradient(135deg, #e3e0d7 0%, #8f879d 31%, #202025 72%, #080808 100%)",
-];
+export const coverGradients = {
+  mist: "linear-gradient(135deg, #d6dae5 0%, #6d7891 34%, #1b1b20 72%, #080808 100%)",
+  antique: "linear-gradient(135deg, #d6c28d 0%, #6d6558 32%, #151516 70%, #080808 100%)",
+  iris: "linear-gradient(135deg, #b7a9d7 0%, #58647e 36%, #15161a 72%, #090909 100%)",
+  sage: "linear-gradient(135deg, #bdd1ce 0%, #687482 35%, #171614 70%, #090908 100%)",
+  pearl: "linear-gradient(135deg, #e3e0d7 0%, #8f879d 31%, #202025 72%, #080808 100%)",
+} as const;
 
 const dragDegreesPerPixel = 0.13;
 const idleVelocity = -2.15;
@@ -56,7 +56,7 @@ function mod(value: number, divisor: number) {
   return ((value % divisor) + divisor) % divisor;
 }
 
-function coverStyle(project: Project, index: number): CSSProperties {
+function coverStyle(project: Project): CSSProperties {
   if (project.cover) {
     const overlay =
       project.slug === "robust-humanoid-action-delay"
@@ -70,7 +70,7 @@ function coverStyle(project: Project, index: number): CSSProperties {
     };
   }
 
-  return { backgroundImage: coverGradients[index % coverGradients.length] };
+  return { backgroundImage: coverGradients[project.coverTone || "mist"] };
 }
 
 function projectIndex(projects: Project[], project: Project) {
@@ -153,18 +153,23 @@ function RingAlbumCard({
           "group relative h-full w-full overflow-hidden border bg-graphite-850 text-left outline-none transition duration-300",
           "shadow-[0_30px_110px_rgba(0,0,0,0.42)]",
           active
-            ? "border-mist/60 shadow-[0_0_0_1px_rgba(170,183,207,0.24),0_0_48px_rgba(170,183,207,0.28),0_38px_120px_rgba(0,0,0,0.52)]"
-            : "border-white/10 opacity-70 hover:border-mist/45 hover:opacity-100 hover:shadow-[0_0_0_1px_rgba(170,183,207,0.2),0_0_40px_rgba(170,183,207,0.2),0_34px_100px_rgba(0,0,0,0.5)]",
+            ? "border-transparent shadow-[0_0_48px_rgba(170,183,207,0.28),0_38px_120px_rgba(0,0,0,0.52)]"
+            : "border-transparent opacity-70 hover:opacity-100 hover:shadow-[0_0_32px_rgba(170,183,207,0.2),0_34px_100px_rgba(0,0,0,0.5)]",
         ].join(" ")}
         data-album-project={project.slug}
         ref={registerCover}
-        style={coverStyle(project, index)}
+        style={coverStyle(project)}
         type="button"
         whileHover={{ scale: 1.035, y: -5 }}
         whileTap={{ scale: 0.985 }}
         transition={coverSpring}
         onClick={(event) => {
           event.stopPropagation();
+          if (event.detail === 0) {
+            onSelect(project, event.currentTarget);
+          }
+        }}
+        onPointerUp={(event) => {
           onSelect(project, event.currentTarget);
         }}
         onMouseEnter={() => onHover(true)}
@@ -207,7 +212,9 @@ function CoverArtwork({
       </span>
       <span className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100 group-focus-visible:opacity-100">
         <span className="absolute -inset-12 bg-[radial-gradient(circle_at_50%_34%,rgba(170,183,207,0.4),transparent_48%)]" />
-        <span className="absolute inset-0 ring-1 ring-inset ring-white/45" />
+        {!compact ? (
+          <span className="absolute inset-0 ring-1 ring-inset ring-white/45" />
+        ) : null}
       </span>
     </>
   );
@@ -257,7 +264,7 @@ function PreviewOverlay({
       exit={{ opacity: 0 }}
       role="dialog"
       transition={{ duration: isClosing ? 0.32 : 0.28, ease: overlayEase }}
-      onPointerDown={(event) => {
+      onClick={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
         }
@@ -280,7 +287,7 @@ function PreviewOverlay({
           <motion.button
             aria-label={`Open ${project.title}`}
             animate={{ opacity: 1, rotateY: 0, scale: 1, x: 0 }}
-            className="group absolute inset-0 overflow-hidden border border-white/14 bg-graphite-850 text-left outline-none shadow-[0_44px_170px_rgba(0,0,0,0.58)]"
+            className="group absolute inset-0 cursor-pointer overflow-hidden border border-white/14 bg-graphite-850 text-left outline-none shadow-[0_44px_170px_rgba(0,0,0,0.58)]"
             custom={direction}
             exit={{
               opacity: 0,
@@ -296,7 +303,7 @@ function PreviewOverlay({
             }}
             key={project.slug}
             style={{
-              ...coverStyle(project, index),
+              ...coverStyle(project),
               transformOrigin: direction === 1 ? "100% 50%" : "0% 50%",
             }}
             transition={{ duration: 0.46, ease: overlayEase }}
@@ -333,38 +340,45 @@ function PreviewOverlay({
           initial={{ opacity: 0, y: -8 }}
           transition={{ delay: phase === "opening" ? 0.16 : 0, duration: 0.32, ease: overlayEase }}
         >
-          <button
+          <motion.button
             aria-label="Previous project"
             className="grid h-10 w-10 place-items-center rounded-full border border-white/12 bg-black/20 text-white/72 backdrop-blur-xl transition hover:border-mist/55 hover:bg-white/[0.09] hover:text-white"
+            title="Previous project"
             type="button"
+            whileTap={{ scale: 0.9 }}
             onClick={(event) => {
               event.stopPropagation();
               onStep(-1);
             }}
           >
             ←
-          </button>
-          <button
-            className="min-w-28 rounded-full border border-white/12 bg-black/20 px-4 py-2.5 text-xs text-white/70 backdrop-blur-xl transition hover:border-mist/55 hover:bg-white/[0.09] hover:text-white"
+          </motion.button>
+          <motion.button
+            aria-label={openLabel}
+            className="grid h-10 w-10 place-items-center rounded-full border border-white/12 bg-black/20 text-xl leading-none text-white/72 backdrop-blur-xl transition hover:border-mist/55 hover:bg-white/[0.09] hover:text-white"
+            title={openLabel}
             type="button"
+            whileTap={{ scale: 0.9 }}
             onClick={(event) => {
               event.stopPropagation();
               onClose();
             }}
           >
-            {openLabel}
-          </button>
-          <button
+            ×
+          </motion.button>
+          <motion.button
             aria-label="Next project"
             className="grid h-10 w-10 place-items-center rounded-full border border-white/12 bg-black/20 text-white/72 backdrop-blur-xl transition hover:border-mist/55 hover:bg-white/[0.09] hover:text-white"
+            title="Next project"
             type="button"
+            whileTap={{ scale: 0.9 }}
             onClick={(event) => {
               event.stopPropagation();
               onStep(1);
             }}
           >
             →
-          </button>
+          </motion.button>
         </motion.div>
       </motion.div>
     </motion.div>,
@@ -388,7 +402,6 @@ export function AlbumShowcase({ projects }: AlbumShowcaseProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const coverRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const dragState = useRef({ active: false, startX: 0, startRotation: 0, lastX: 0, lastTime: 0 });
-  const tapCandidate = useRef<Project | null>(null);
   const angularVelocity = useRef(0);
   const snapAnimation = useRef<{ stop: () => void } | null>(null);
   const suppressClick = useRef(false);
@@ -487,29 +500,6 @@ export function AlbumShowcase({ projects }: AlbumShowcaseProps) {
     setSelectedProjectIndex((current) => mod(current + direction, projects.length));
   }
 
-  function projectAtPointer(clientX: number, clientY: number) {
-    const matches = projects.flatMap((project) => {
-      const rect = rectFromElement(coverRefs.current[project.slug]);
-      if (
-        !rect ||
-        clientX < rect.x ||
-        clientX > rect.x + rect.width ||
-        clientY < rect.y ||
-        clientY > rect.y + rect.height
-      ) {
-        return [];
-      }
-
-      const distance =
-        Math.pow((clientX - (rect.x + rect.width / 2)) / rect.width, 2) +
-        Math.pow((clientY - (rect.y + rect.height / 2)) / rect.height, 2);
-
-      return [{ project, distance }];
-    });
-
-    return matches.sort((a, b) => a.distance - b.distance)[0]?.project ?? null;
-  }
-
   function closePreview() {
     if (mode !== "preview" || previewPhase === "closing") {
       return;
@@ -531,7 +521,6 @@ export function AlbumShowcase({ projects }: AlbumShowcaseProps) {
   function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
     if (event.button !== 0) return;
     stopSnapAnimation();
-    tapCandidate.current = projectAtPointer(event.clientX, event.clientY);
     dragState.current = {
       active: true,
       startX: event.clientX,
@@ -541,7 +530,6 @@ export function AlbumShowcase({ projects }: AlbumShowcaseProps) {
     };
     angularVelocity.current = 0;
     suppressClick.current = false;
-    event.currentTarget.setPointerCapture(event.pointerId);
   }
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
@@ -551,8 +539,10 @@ export function AlbumShowcase({ projects }: AlbumShowcaseProps) {
     const totalOffset = event.clientX - state.startX;
     const deltaX = event.clientX - state.lastX;
     const deltaTime = Math.max(now - state.lastTime, 16);
-    if (Math.abs(totalOffset) > 6) suppressClick.current = true;
-    if (suppressClick.current) tapCandidate.current = null;
+    if (Math.abs(totalOffset) > 6 && !suppressClick.current) {
+      suppressClick.current = true;
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
     rotation.set(state.startRotation + totalOffset * dragDegreesPerPixel);
     angularVelocity.current = (deltaX / deltaTime) * dragDegreesPerPixel * 1000;
     state.lastX = event.clientX;
@@ -566,35 +556,29 @@ export function AlbumShowcase({ projects }: AlbumShowcaseProps) {
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     if (selectOnTap) {
       angularVelocity.current = 0;
-      const project = tapCandidate.current ?? activeProject;
-      tapCandidate.current = null;
-      openPreview(project, coverRefs.current[project.slug]);
       return;
     }
-    tapCandidate.current = null;
     window.setTimeout(() => { suppressClick.current = false; }, 120);
   }
 
   if (projects.length === 0 || !activeProject || !selectedProject) return null;
 
   return (
-    <section aria-label="Featured research albums" className="relative overflow-hidden py-4 sm:py-6" ref={sectionRef}>
+    <section aria-label="Featured research albums" className="relative overflow-hidden" ref={sectionRef}>
       <motion.div
         animate={{ filter: mode === "preview" ? "blur(8px) saturate(0.72)" : "blur(0px) saturate(1)", opacity: mode === "preview" ? 0.36 : 1 }}
         className="transition-none"
         transition={{ duration: 0.38, ease: overlayEase }}
       >
-        <div className="page-shell flex items-end justify-between gap-6">
-          <div>
-            <p className="text-xs uppercase text-antique/72">{t("showcase.eyebrow")}</p>
-            <h2 className="mt-3 text-2xl font-medium text-white sm:text-3xl">{t("showcase.title")}</h2>
-          </div>
-          <p className="hidden max-w-xs text-right text-sm leading-6 text-white/48 sm:block">{t("showcase.instruction")}</p>
-        </div>
-
-        <div className="album-stage relative mt-3 h-[500px] overflow-hidden sm:h-[600px] lg:h-[650px]">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(170,183,207,0.14),transparent_38%),linear-gradient(90deg,#070707_0%,transparent_15%,transparent_85%,#070707_100%)]" />
-          <div className="pointer-events-none absolute left-1/2 top-[22%] h-[54%] w-px -translate-x-1/2 -translate-y-1/2 bg-gradient-to-b from-transparent via-mist/16 to-transparent" />
+        <motion.div
+          className="album-stage relative h-[440px] overflow-hidden sm:h-[500px] lg:h-[540px]"
+          initial={{ opacity: 0, scale: 0.985, y: 20 }}
+          transition={{ duration: 0.72, ease: [0.16, 1, 0.3, 1] }}
+          viewport={{ once: true, margin: "-60px" }}
+          whileInView={{ opacity: 1, scale: 1, y: 0 }}
+        >
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(170,183,207,0.1),transparent_42%),linear-gradient(90deg,#070707_0%,transparent_10%,transparent_90%,#070707_100%)]" />
+          <div className="pointer-events-none absolute left-1/2 top-[29%] h-[46%] w-px -translate-x-1/2 -translate-y-1/2 bg-gradient-to-b from-transparent via-mist/12 to-transparent" />
           <div
             className="absolute inset-0 cursor-grab touch-pan-y select-none active:cursor-grabbing"
             onPointerCancel={handlePointerEnd}
@@ -603,7 +587,7 @@ export function AlbumShowcase({ projects }: AlbumShowcaseProps) {
             onPointerUp={handlePointerEnd}
           >
             <motion.div
-              className="absolute left-1/2 top-[22%] h-0 w-0"
+              className="absolute left-1/2 top-[29%] h-0 w-0"
               style={{ transform: ringTransform, transformStyle: "preserve-3d" }}
             >
               {projects.map((project, index) => (
@@ -621,20 +605,51 @@ export function AlbumShowcase({ projects }: AlbumShowcaseProps) {
               ))}
             </motion.div>
           </div>
-          <div className="pointer-events-none absolute inset-x-0 bottom-7 z-10 flex justify-center px-5 text-center">
-            <div className="max-w-[90vw]">
-              <p className="text-xs uppercase text-white/36">{String(activeIndex + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}</p>
-              <h3 className="mt-2 text-xl font-medium text-white sm:text-2xl">{activeProject.title}</h3>
-              <p className="mt-2 line-clamp-1 text-sm text-white/44">{activeProject.subtitle}</p>
-            </div>
+          <div className="absolute inset-x-0 bottom-4 z-10 flex items-center justify-center gap-3 px-4 sm:bottom-6">
+            <motion.button
+              aria-label="Previous project cover"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-black/20 text-white/60 backdrop-blur-xl transition-colors hover:border-mist/40 hover:bg-white/[0.06] hover:text-white"
+              title="Previous project"
+              type="button"
+              whileTap={{ scale: 0.9 }}
+              onClick={() => stepRing(-1)}
+            >
+              ←
+            </motion.button>
+            <motion.button
+              aria-label={`Preview ${activeProject.title}`}
+              className="group min-w-0 max-w-[min(70vw,520px)] px-3 py-2 text-center"
+              type="button"
+              whileTap={{ scale: 0.98 }}
+              onClick={() =>
+                openPreview(
+                  activeProject,
+                  coverRefs.current[activeProject.slug]
+                )
+              }
+            >
+              <span className="block text-[11px] uppercase text-white/32">
+                {String(activeIndex + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}
+              </span>
+              <span className="mt-1 block truncate text-lg font-medium text-white/86 transition-colors group-hover:text-white sm:text-xl">
+                {activeProject.title}
+              </span>
+              <span className="mt-1 block truncate text-xs text-white/38 sm:text-sm">
+                {activeProject.subtitle}
+              </span>
+            </motion.button>
+            <motion.button
+              aria-label="Next project cover"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-black/20 text-white/60 backdrop-blur-xl transition-colors hover:border-mist/40 hover:bg-white/[0.06] hover:text-white"
+              title="Next project"
+              type="button"
+              whileTap={{ scale: 0.9 }}
+              onClick={() => stepRing(1)}
+            >
+              →
+            </motion.button>
           </div>
-        </div>
-
-        <div className="page-shell -mt-4 flex items-center justify-center gap-4">
-          <button aria-label="Previous project cover" className="grid h-10 w-10 place-items-center rounded-full border border-white/12 text-white/62 transition hover:border-mist/45 hover:bg-white/[0.05] hover:text-white" type="button" onClick={() => stepRing(-1)}>←</button>
-          <button className="rounded-full border border-white/12 px-5 py-2.5 text-sm text-white/60 transition hover:border-mist/45 hover:bg-white/[0.05] hover:text-white" type="button" onClick={() => openPreview(activeProject, coverRefs.current[activeProject.slug])}>{t("showcase.select")}</button>
-          <button aria-label="Next project cover" className="grid h-10 w-10 place-items-center rounded-full border border-white/12 text-white/62 transition hover:border-mist/45 hover:bg-white/[0.05] hover:text-white" type="button" onClick={() => stepRing(1)}>→</button>
-        </div>
+        </motion.div>
       </motion.div>
 
       <AnimatePresence onExitComplete={() => {

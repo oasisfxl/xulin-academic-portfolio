@@ -1,24 +1,47 @@
+"use client";
+
 import { ContentDocument } from "@/lib/content";
+import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { MouseEvent } from "react";
+
+const MotionLink = motion.create(Link);
 
 type NoteListProps = {
   notes: ContentDocument[];
 };
 
 export function NoteList({ notes }: NoteListProps) {
+  const router = useRouter();
+
+  function openNote(event: MouseEvent<HTMLElement>, slug: string) {
+    if (event.target instanceof Element && event.target.closest("a, button")) {
+      return;
+    }
+    router.push(`/notes/${slug}`);
+  }
+
   return (
     <div>
       {notes.map(({ meta }) => {
         const isPublic = meta.visibility === "public";
 
         return (
-          <article
-            className="group relative -mx-4 grid gap-5 overflow-hidden border-t border-white/[0.08] px-4 py-8 transition duration-300 hover:border-mist/30 hover:bg-white/[0.025] hover:shadow-[0_0_54px_rgba(170,183,207,0.09)] sm:grid-cols-[136px_minmax(0,1fr)]"
+          <motion.article
+            className={`group relative -mx-4 grid gap-5 overflow-hidden border-t border-white/[0.08] px-4 py-8 transition-[background-color,border-color,box-shadow] duration-300 hover:z-10 hover:border-mist/36 hover:bg-white/[0.05] hover:shadow-[0_20px_70px_rgba(0,0,0,0.28)] sm:grid-cols-[136px_minmax(0,1fr)] ${isPublic ? "cursor-pointer" : "cursor-default"}`}
+            initial={{ opacity: 0, y: 16 }}
             key={meta.slug}
+            transition={{ type: "spring", stiffness: 320, damping: 28, mass: 0.72 }}
+            viewport={{ once: true, margin: "-70px" }}
+            whileHover={{ scale: 1.01, y: -4 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            whileTap={isPublic ? { scale: 0.995, y: -1 } : undefined}
+            onClick={isPublic ? (event) => openNote(event, meta.slug) : undefined}
           >
             <span className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100">
-              <span className="absolute -left-32 top-1/2 h-44 w-72 -translate-y-1/2 bg-[radial-gradient(circle,rgba(170,183,207,0.18),transparent_68%)]" />
               <span className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-mist/36 to-transparent" />
+              <span className="absolute inset-y-0 left-0 w-px bg-mist/28" />
             </span>
             <div className="text-sm text-white/42">
               <p>{meta.date || meta.year || "Draft"}</p>
@@ -28,15 +51,16 @@ export function NoteList({ notes }: NoteListProps) {
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                 <div>
                   {isPublic ? (
-                    <Link
+                    <MotionLink
                       className="inline-flex items-center gap-2 text-xl font-medium text-white transition hover:text-mist"
                       href={`/notes/${meta.slug}`}
+                      whileTap={{ scale: 0.975 }}
                     >
                       {meta.title}
-                      <span aria-hidden="true" className="text-sm text-white/38">
+                      <span aria-hidden="true" className="text-sm text-white/38 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1">
                         ↗
                       </span>
-                    </Link>
+                    </MotionLink>
                   ) : (
                     <div className="inline-flex items-center gap-2 text-xl font-medium text-white/72">
                       {meta.title}
@@ -67,7 +91,7 @@ export function NoteList({ notes }: NoteListProps) {
                 ))}
               </div>
             </div>
-          </article>
+          </motion.article>
         );
       })}
     </div>

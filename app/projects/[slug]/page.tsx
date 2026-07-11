@@ -1,9 +1,9 @@
 import { MdxContent } from "@/components/mdx/MdxContent";
 import { getContentBySlug } from "@/lib/content";
+import { projectHref } from "@/lib/project-routing";
 import {
   getPublicProjectBySlug,
   getPublicProjects,
-  projectHref,
 } from "@/lib/projects";
 import type { Metadata } from "next";
 import Link from "next/link";

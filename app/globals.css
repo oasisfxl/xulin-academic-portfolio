@@ -19,10 +19,12 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at 18% 0%, rgba(170, 183, 207, 0.14), transparent 32rem),
-    radial-gradient(circle at 88% 12%, rgba(200, 183, 138, 0.1), transparent 24rem),
-    linear-gradient(180deg, #0b0b0d 0%, #070707 48%, #0e0d0b 100%);
+  background: linear-gradient(
+    145deg,
+    #0b0b0d 0%,
+    #070707 48%,
+    #0c0b0a 100%
+  );
   color: var(--foreground);
   font-family: Inter, Geist, ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -44,6 +46,11 @@ input,
 textarea,
 select {
   font: inherit;
+}
+
+:focus-visible {
+  outline: 1px solid rgba(170, 183, 207, 0.8);
+  outline-offset: 4px;
 }
 
 .page-shell {
@@ -86,8 +93,8 @@ select {
 }
 
 .album-stage {
-  --album-card-size: clamp(112px, 31vw, 150px);
-  --album-ring-radius: min(92vw, 420px);
+  --album-card-size: clamp(118px, 35vw, 154px);
+  --album-ring-radius: min(58vw, 220px);
   perspective: 1300px;
 }
 
@@ -109,17 +116,17 @@ select {
 
 @media (min-width: 640px) {
   .album-stage {
-    --album-card-size: clamp(142px, 14vw, 184px);
-    --album-ring-radius: min(58vw, 640px);
-    perspective: 1600px;
+    --album-card-size: clamp(148px, 18vw, 184px);
+    --album-ring-radius: min(34vw, 285px);
+    perspective: 1500px;
   }
 }
 
 @media (min-width: 1024px) {
   .album-stage {
-    --album-card-size: clamp(158px, 11.8vw, 196px);
-    --album-ring-radius: min(54vw, 720px);
-    perspective: 1900px;
+    --album-card-size: clamp(170px, 13vw, 196px);
+    --album-ring-radius: min(26vw, 330px);
+    perspective: 1750px;
   }
 }
 
