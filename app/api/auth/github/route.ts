@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   }
 
   const state = newOAuthState();
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
+  const origin = new URL(request.url).origin;
   const callback = new URL("/api/auth/github/callback", origin).toString();
   const authorize = new URL("https://github.com/login/oauth/authorize");
   authorize.searchParams.set("client_id", clientId);

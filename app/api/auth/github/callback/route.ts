@@ -10,7 +10,7 @@ type GitHubTokenResponse = { access_token?: string; error?: string };
 type GitHubUser = { login?: string };
 
 function studioUrl(request: Request, path = "/studio") {
-  return new URL(path, process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin);
+  return new URL(path, new URL(request.url).origin);
 }
 
 export async function GET(request: Request) {
@@ -31,26 +31,34 @@ export async function GET(request: Request) {
   }
 
   const callback = studioUrl(request, "/api/auth/github/callback").toString();
-  const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
-    method: "POST",
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
-    body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code, redirect_uri: callback }),
-    cache: "no-store",
-  });
-  const tokenData = (await tokenResponse.json()) as GitHubTokenResponse;
-  if (!tokenData.access_token) {
-    return NextResponse.redirect(studioUrl(request, "/studio/login?error=token"));
-  }
+  let user: GitHubUser;
+  try {
+    const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
+      method: "POST",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code, redirect_uri: callback }),
+      cache: "no-store",
+    });
+    const tokenData = (await tokenResponse.json()) as GitHubTokenResponse;
+    if (!tokenData.access_token) {
+      return NextResponse.redirect(studioUrl(request, "/studio/login?error=token"));
+    }
 
-  const userResponse = await fetch("https://api.github.com/user", {
-    headers: {
-      Accept: "application/vnd.github+json",
-      Authorization: `Bearer ${tokenData.access_token}`,
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
-    cache: "no-store",
-  });
-  const user = (await userResponse.json()) as GitHubUser;
+    const userResponse = await fetch("https://api.github.com/user", {
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${tokenData.access_token}`,
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      cache: "no-store",
+    });
+    if (!userResponse.ok) {
+      return NextResponse.redirect(studioUrl(request, "/studio/login?error=identity"));
+    }
+    user = (await userResponse.json()) as GitHubUser;
+  } catch {
+    return NextResponse.redirect(studioUrl(request, "/studio/login?error=network"));
+  }
   const allowedLogin = (process.env.GITHUB_ADMIN_LOGIN || "oasisfxl").toLowerCase();
   if (!user.login || user.login.toLowerCase() !== allowedLogin) {
     return NextResponse.redirect(studioUrl(request, "/studio/login?error=forbidden"));
