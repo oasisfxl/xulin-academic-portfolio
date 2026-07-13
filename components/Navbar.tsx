@@ -36,6 +36,31 @@ const languageTitle = {
   zh: "English",
 } as const;
 
+function StudioIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-3.5 w-3.5"
+      fill="none"
+      viewBox="0 0 24 24"
+    >
+      <path
+        d="m4.75 19.25 4.1-.92L18.5 8.68a2.12 2.12 0 0 0-3-3L5.83 15.35l-1.08 3.9Z"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.6"
+      />
+      <path
+        d="m13.9 7.1 3 3M8.85 18.33l-3.02-2.98"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeWidth="1.6"
+      />
+    </svg>
+  );
+}
+
 export function Navbar() {
   const pathname = usePathname();
   const { language, t, toggleLanguage } = useLanguage();
@@ -45,6 +70,7 @@ export function Navbar() {
   const activeIndex = navItems.findIndex((item) =>
     item.href === "/" ? pathname === "/" : pathname.startsWith(item.href)
   );
+  const studioActive = pathname.startsWith("/studio");
 
   const measureCursor = useCallback((index = activeIndex) => {
     const track = trackRef.current;
@@ -128,19 +154,30 @@ export function Navbar() {
             );
           })}
           </div>
-          {process.env.NODE_ENV === "development" ? (
-            <>
-              <span className="mx-1 hidden h-4 w-px bg-white/12 sm:block" />
-              <motion.div className="hidden sm:block" whileTap={{ scale: 0.95 }}>
-                <Link
-                  className="block rounded-full px-3 py-1.5 text-xs text-antique/72 transition-colors hover:bg-white/[0.06] hover:text-white sm:text-sm"
-                  href="/studio"
-                >
-                  Studio
-                </Link>
-              </motion.div>
-            </>
-          ) : null}
+          <span className="mx-1 hidden h-4 w-px bg-white/12 sm:block" />
+          <motion.div whileTap={{ scale: 0.94 }}>
+            <Link
+              aria-current={studioActive ? "page" : undefined}
+              aria-label="Open Content Studio"
+              className={`group relative flex items-center gap-1.5 overflow-hidden rounded-full px-2.5 py-1.5 text-xs transition-colors sm:px-3 sm:text-sm ${
+                studioActive
+                  ? "text-white"
+                  : "text-antique/72 hover:text-white"
+              }`}
+              href="/studio"
+              title="Content Studio"
+            >
+              <motion.span
+                animate={{ opacity: studioActive ? 1 : 0 }}
+                className="pointer-events-none absolute inset-0 rounded-full border border-antique/18 bg-antique/[0.09] shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_8px_24px_rgba(181,162,115,0.08)]"
+                initial={false}
+              />
+              <span className="relative z-10">
+                <StudioIcon />
+              </span>
+              <span className="relative z-10 hidden sm:inline">Studio</span>
+            </Link>
+          </motion.div>
           <span className="mx-1 h-4 w-px bg-white/12" />
           <motion.button
             aria-label={languageAria[language]}

@@ -3,8 +3,21 @@
 import type { ContentDocument, ContentVisibility } from "@/lib/content";
 import type { ProjectCoverTone, Project } from "@/data/projects";
 import { upload } from "@vercel/blob/client";
-import { motion } from "framer-motion";
-import { ChangeEvent, FormEvent, useMemo, useState } from "react";
+import {
+  motion,
+  useMotionTemplate,
+  useMotionValue,
+  useSpring,
+} from "framer-motion";
+import Link from "next/link";
+import {
+  ChangeEvent,
+  FormEvent,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+  useMemo,
+  useState,
+} from "react";
 
 type StudioKind = "notes" | "projects";
 
@@ -67,6 +80,76 @@ const coverTones: Array<{ value: ProjectCoverTone; color: string }> = [
   { value: "sage", color: "#829d99" },
   { value: "pearl", color: "#c4c0b7" },
 ];
+
+function LiquidCreateButton({
+  children,
+  tone,
+  onClick,
+}: {
+  children: ReactNode;
+  tone: "mist" | "antique";
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const pointerX = useMotionValue(0);
+  const pointerY = useMotionValue(0);
+  const smoothX = useSpring(pointerX, { stiffness: 280, damping: 28, mass: 0.35 });
+  const smoothY = useSpring(pointerY, { stiffness: 280, damping: 28, mass: 0.35 });
+  const color = tone === "mist" ? "170,183,207" : "181,162,115";
+  const glow = useMotionTemplate`radial-gradient(44px circle at ${smoothX}px ${smoothY}px, rgba(${color},0.3), rgba(${color},0.1) 48%, transparent 76%)`;
+
+  function trackPointer(event: ReactPointerEvent<HTMLButtonElement>) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    pointerX.set(event.clientX - rect.left);
+    pointerY.set(event.clientY - rect.top);
+  }
+
+  function centerPointer(event: ReactPointerEvent<HTMLButtonElement>) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    pointerX.set(rect.width / 2);
+    pointerY.set(rect.height / 2);
+  }
+
+  function enterButton(event: ReactPointerEvent<HTMLButtonElement>) {
+    setHovered(true);
+    trackPointer(event);
+  }
+
+  function leaveButton(event: ReactPointerEvent<HTMLButtonElement>) {
+    setHovered(false);
+    centerPointer(event);
+  }
+
+  return (
+    <motion.button
+      className={`group relative isolate overflow-hidden rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+        tone === "mist"
+          ? "border-mist/18 text-mist/78 hover:border-mist/38 hover:text-white"
+          : "border-antique/18 text-antique/78 hover:border-antique/38 hover:text-white"
+      }`}
+      type="button"
+      whileHover={{ scale: 1.035 }}
+      whileTap={{ scale: 0.96 }}
+      transition={{ type: "spring", stiffness: 420, damping: 28 }}
+      onClick={onClick}
+      onPointerEnter={enterButton}
+      onPointerLeave={leaveButton}
+      onPointerMove={trackPointer}
+    >
+      <motion.span
+        animate={{ opacity: hovered ? 1 : 0 }}
+        className="pointer-events-none absolute inset-0 -z-10"
+        initial={false}
+        style={{ background: glow }}
+        transition={{ duration: hovered ? 0.16 : 0.3, ease: "easeOut" }}
+      />
+      <span className="flex items-center gap-1.5">
+        <span className="text-base font-light leading-none">+</span>
+        {children}
+      </span>
+    </motion.button>
+  );
+}
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -433,9 +516,23 @@ export function ContentStudio({
             Content Studio
           </h1>
         </div>
-        <div className="text-right text-sm text-white/38">
-          <p>@{adminLogin}</p>
-          <a className="mt-1 inline-block text-white/52 transition hover:text-white" href="/api/auth/logout">Sign out</a>
+        <div className="flex items-center gap-5 text-right text-sm text-white/38">
+          <Link
+            className="text-white/52 transition-colors hover:text-white"
+            href="/"
+          >
+            View site ↗
+          </Link>
+          <span className="h-5 w-px bg-white/10" />
+          <div>
+            <p>@{adminLogin}</p>
+            <a
+              className="mt-1 inline-block text-white/52 transition hover:text-white"
+              href="/api/auth/logout"
+            >
+              Sign out
+            </a>
+          </div>
         </div>
       </header>
 
@@ -443,14 +540,12 @@ export function ContentStudio({
         <aside className="border-b border-white/10 py-7 lg:border-b-0 lg:border-r lg:pr-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xs uppercase text-white/38">Notes</h2>
-            <motion.button
-              className="text-sm text-mist/76 transition-colors hover:text-white"
-              type="button"
-              whileTap={{ scale: 0.94 }}
+            <LiquidCreateButton
+              tone="mist"
               onClick={() => setDraft(newNoteDraft())}
             >
-              New
-            </motion.button>
+              New note
+            </LiquidCreateButton>
           </div>
           <div className="mt-4 space-y-1">
             {notes.map((document) => (
@@ -474,14 +569,12 @@ export function ContentStudio({
 
           <div className="mt-8 flex items-center justify-between">
             <h2 className="text-xs uppercase text-white/38">Projects</h2>
-            <motion.button
-              className="text-sm text-antique/76 transition-colors hover:text-white"
-              type="button"
-              whileTap={{ scale: 0.94 }}
+            <LiquidCreateButton
+              tone="antique"
               onClick={() => setDraft(newProjectDraft())}
             >
-              New
-            </motion.button>
+              New project
+            </LiquidCreateButton>
           </div>
           <div className="mt-4 space-y-1">
             {managedProjects.map((project) => {
