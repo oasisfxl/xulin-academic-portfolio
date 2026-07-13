@@ -11,66 +11,179 @@ coverTone: antique
 date: '2026-07-13'
 updated: '2026-07-13'
 ---
-SONIC遥操作
-网络检查 → C++ deploy → PICO manager → 启动控制。
-1. 检查网络
+# SONIC 遥操作启动流程（Real Robot）
+
+## 1. 检查网络
+
+```bash
 ip -br addr
-确认有这两个网段：
-192.168.2.xxx      # PICO/局域网
-192.168.123.xxx    # G1 真机网段
-如果 G1 那个 USB 网卡没起来，比如还是 DOWN，重新配置：
+```
+
+确认存在以下两个网段：
+
+- `192.168.2.xxx`：PICO / 局域网
+- `192.168.123.xxx`：G1 真机网段
+
+如果 G1 对应的 USB 网卡没有启动（例如仍为 `DOWN`），执行：
+
+```bash
 sudo ip link set enx6c1ff7df9277 up
 sudo ip addr add 192.168.123.200/24 dev enx6c1ff7df9277
-然后测一下 G1：
+```
+
+测试与 G1 的连通性：
+
+```bash
 ping 192.168.123.161
 ping 192.168.123.164
-2. 确认 PICO XRoboToolKit
-PICO 里 PC Service IP 仍然填服务器局域网 IP，比如：
+```
+
+---
+
+## 2. 确认 PICO XRoboToolKit 配置
+
+PICO 中 **PC Service IP** 应填写服务器局域网 IP，例如：
+
+```text
 192.168.2.170
-不是 192.168.123.200。
-XRoboToolKit 里确认：
-Status: WORKING
-Tracking: Head + Controller
-Data/Control: Send
-Pico Motion Tracker: Full body
-3. 启动真机 C++ deploy
+```
+
+> **不要填写：**
+
+```text
+192.168.123.200
+```
+
+确认 XRoboToolKit 状态：
+
+- Status：`WORKING`
+- Tracking：`Head + Controller`
+- Data / Control：`Send`
+- Pico Motion Tracker：`Full body`
+
+---
+
+## 3. 启动真机 C++ Deploy
+
 终端 1：
+
+```bash
 cd /home/xulinfu/projects/gr00t_n17_g1_dex3/GR00T-WholeBodyControl/gear_sonic_deploy
+
 source scripts/setup_env.sh
+
 ./deploy.sh --input-type zmq_manager real
-确认它显示：
+```
+
+确认输出包含：
+
+```text
 Environment: real
 Network Interface: enx6c1ff7df9277
 Input Type: zmq_manager
-看到确认提示后输入：
+```
+
+出现确认提示后输入：
+
+```text
 Y
-等到 Init done。
-4. 启动 PICO manager
+```
+
+等待初始化完成（`Init done`）。
+
+---
+
+## 4. 启动 PICO Manager
+
 终端 2：
+
+```bash
 cd /home/xulinfu/projects/gr00t_n17_g1_dex3/GR00T-WholeBodyControl
+
 export DISPLAY=:1
+
 source .venv_teleop/bin/activate
-python gear_sonic/scripts/pico_manager_thread_server.py --manager --vis_vr3pt --vis_smpl
-确认不再卡在：
+
+python gear_sonic/scripts/pico_manager_thread_server.py \
+    --manager \
+    --vis_vr3pt \
+    --vis_smpl
+```
+
+确认程序**不要一直停留在**：
+
+```text
 waiting for body data...
-5. 启动控制
-人站好校准姿势，PICO 手柄按：
-A+B+X+Y
-终端应该出现：
+```
+
+---
+
+## 5. 启动控制
+
+### 校准
+
+站好校准姿势后，同时按下：
+
+```text
+A + B + X + Y
+```
+
+终端应出现：
+
+```text
 [Manager] StreamMode switch: OFF -> PLANNER
-然后按：
-A+X
-进入 POSE 模式。
-急停
-C++ 终端随时按：
+```
+
+随后按：
+
+```text
+A + X
+```
+
+进入 **POSE** 模式。
+
+---
+
+## 急停
+
+### 方法一：C++ Deploy
+
+在 C++ Deploy 终端按：
+
+```text
 O
-PICO 侧按：
-A+B+X+Y
-可以切回 OFF。
-下次如果只是做 sim2sim，不要跑 real，改成：
+```
+
+### 方法二：PICO
+
+再次按：
+
+```text
+A + B + X + Y
+```
+
+即可切回 **OFF** 模式。
+
+---
+
+# Sim2Sim 启动流程
+
+如果只是进行 **Sim2Sim**，不要启动 `real` 模式。
+
+启动方式改为：
+
+```bash
 ./deploy.sh --input-type zmq_manager sim
-并且另开 MuJoCo：
+```
+
+然后另开一个终端启动 MuJoCo：
+
+```bash
 cd /home/xulinfu/projects/gr00t_n17_g1_dex3/GR00T-WholeBodyControl
+
 export DISPLAY=:1
+
 source .venv_sim/bin/activate
+
 python gear_sonic/scripts/run_sim_loop.py
+```
