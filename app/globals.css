@@ -4,8 +4,15 @@
 
 :root {
   color-scheme: dark;
-  --background: #070707;
-  --foreground: #eeeeef;
+  --background: #09090a;
+  --foreground: #f1f1f2;
+  --surface: #101012;
+  --surface-raised: #151518;
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --muted: rgba(255, 255, 255, 0.56);
+  --accent: #aebbd1;
+  --accent-warm: #c8b78a;
 }
 
 * {
@@ -19,16 +26,46 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background: linear-gradient(
-    145deg,
-    #0b0b0d 0%,
-    #070707 48%,
-    #0c0b0a 100%
-  );
+  background: var(--background);
   color: var(--foreground);
   font-family: Inter, Geist, ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
   letter-spacing: 0;
+}
+
+.public-background {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  background: #09090a;
+  pointer-events: none;
+}
+
+.public-background__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(to bottom, black 0%, rgba(0, 0, 0, 0.72) 48%, transparent 100%);
+}
+
+.public-background__shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(9, 9, 10, 0.05), #09090a 76%);
+}
+
+.studio-route {
+  background: #0a0a0b;
+}
+
+.split-parent .split-word,
+.split-parent .split-char,
+.split-parent .split-line {
+  will-change: transform, opacity;
 }
 
 ::selection {
@@ -54,8 +91,45 @@ select {
 }
 
 .page-shell {
-  width: min(1120px, calc(100% - 40px));
+  width: min(1240px, calc(100% - 40px));
   margin-inline: auto;
+}
+
+.line-waves-container,
+.line-waves-container canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.line-waves-container canvas {
+  display: block;
+}
+
+.spotlight-row {
+  --spot-x: 50%;
+  --spot-y: 50%;
+  position: relative;
+  isolation: isolate;
+}
+
+.spotlight-row::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  opacity: 0;
+  background: radial-gradient(
+    420px circle at var(--spot-x) var(--spot-y),
+    rgba(174, 187, 209, 0.13),
+    rgba(174, 187, 209, 0.035) 42%,
+    transparent 72%
+  );
+  transition: opacity 260ms ease;
+}
+
+.spotlight-row:hover::before,
+.spotlight-row:focus-within::before {
+  opacity: 1;
 }
 
 .album-mask {
@@ -135,8 +209,10 @@ select {
 }
 
 .doc-prose {
+  width: 100%;
+  min-width: 0;
   max-width: 760px;
-  color: rgba(255, 255, 255, 0.68);
+  color: rgba(255, 255, 255, 0.72);
   font-size: 1rem;
   line-height: 1.85;
 }
@@ -145,6 +221,7 @@ select {
   margin-top: 1.2rem;
 }
 
+.doc-prose h1,
 .doc-prose h2,
 .doc-prose h3,
 .doc-prose h4 {
@@ -152,6 +229,11 @@ select {
   font-weight: 500;
   letter-spacing: 0;
   line-height: 1.25;
+}
+
+.doc-prose h1 {
+  margin-top: 3.4rem;
+  font-size: clamp(2rem, 4vw, 2.75rem);
 }
 
 .doc-prose h2 {
@@ -169,6 +251,10 @@ select {
   font-size: 1.1rem;
 }
 
+.doc-prose :is(h1, h2, h3, h4) {
+  scroll-margin-top: 7rem;
+}
+
 .doc-prose a {
   color: #aab7cf;
   text-decoration: underline;
@@ -178,7 +264,7 @@ select {
 
 .doc-prose p,
 .doc-prose li {
-  color: rgba(255, 255, 255, 0.64);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .doc-prose ul,
@@ -198,6 +284,7 @@ select {
 }
 
 .doc-prose code {
+  border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.045);
   padding: 0.1rem 0.35rem;
@@ -206,6 +293,7 @@ select {
 }
 
 .doc-prose pre {
+  border-radius: 8px;
   overflow-x: auto;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.035);
@@ -245,5 +333,11 @@ select {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .public-background {
+    background:
+      radial-gradient(circle at 32% 12%, rgba(145, 155, 178, 0.09), transparent 38%),
+      #050506;
   }
 }

@@ -1,10 +1,11 @@
 "use client";
 
 import { ContentDocument } from "@/lib/content";
+import { coverGradients } from "@/lib/covers";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { MouseEvent } from "react";
+import type { CSSProperties, MouseEvent, PointerEvent } from "react";
 
 const MotionLink = motion.create(Link);
 
@@ -22,14 +23,20 @@ export function NoteList({ notes }: NoteListProps) {
     router.push(`/notes/${slug}`);
   }
 
+  function trackSpotlight(event: PointerEvent<HTMLElement>) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty("--spot-x", `${event.clientX - rect.left}px`);
+    event.currentTarget.style.setProperty("--spot-y", `${event.clientY - rect.top}px`);
+  }
+
   return (
-    <div>
+    <div className="grid gap-3">
       {notes.map(({ meta }) => {
         const isPublic = meta.visibility === "public";
 
         return (
           <motion.article
-            className={`group relative -mx-4 grid gap-5 overflow-hidden border-t border-white/[0.08] px-4 py-8 transition-[background-color,border-color,box-shadow] duration-300 hover:z-10 hover:border-mist/36 hover:bg-white/[0.05] hover:shadow-[0_20px_70px_rgba(0,0,0,0.28)] sm:grid-cols-[136px_minmax(0,1fr)] ${isPublic ? "cursor-pointer" : "cursor-default"}`}
+            className={`spotlight-row group relative grid gap-5 overflow-hidden rounded-[8px] border border-white/[0.08] bg-[#101012]/90 p-4 transition-[background-color,border-color,box-shadow] duration-300 hover:z-10 hover:border-mist/28 hover:bg-[#141417] hover:shadow-[0_22px_70px_rgba(0,0,0,0.3)] sm:grid-cols-[96px_minmax(0,1fr)] sm:p-5 ${isPublic ? "cursor-pointer" : "cursor-default"}`}
             initial={{ opacity: 0, y: 16 }}
             key={meta.slug}
             transition={{ type: "spring", stiffness: 320, damping: 28, mass: 0.72 }}
@@ -38,14 +45,28 @@ export function NoteList({ notes }: NoteListProps) {
             whileInView={{ opacity: 1, y: 0 }}
             whileTap={isPublic ? { scale: 0.995, y: -1 } : undefined}
             onClick={isPublic ? (event) => openNote(event, meta.slug) : undefined}
+            onPointerMove={trackSpotlight}
           >
             <span className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100">
               <span className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-mist/36 to-transparent" />
               <span className="absolute inset-y-0 left-0 w-px bg-mist/28" />
             </span>
-            <div className="text-sm text-white/42">
-              <p>{meta.date || meta.year || "Draft"}</p>
-              {meta.updated ? <p className="mt-2">Updated {meta.updated}</p> : null}
+            <div>
+              <div
+                aria-hidden="true"
+                className="relative aspect-square w-20 overflow-hidden rounded-[5px] border border-white/10 sm:w-24"
+                style={
+                  meta.cover
+                    ? ({ backgroundImage: `linear-gradient(180deg,transparent,rgba(0,0,0,.58)),url(${meta.cover})`, backgroundPosition: "center", backgroundSize: "cover" } as CSSProperties)
+                    : { backgroundImage: coverGradients[meta.coverTone || "mist"] }
+                }
+              >
+                <span className="absolute bottom-3 left-3 text-[10px] uppercase text-white/68">Note</span>
+              </div>
+              <div className="mt-3 text-xs text-white/38">
+                <p>{meta.date || meta.year || "Draft"}</p>
+                {meta.updated ? <p className="mt-1">Updated {meta.updated}</p> : null}
+              </div>
             </div>
             <div>
               <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">

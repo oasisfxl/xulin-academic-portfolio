@@ -11,8 +11,10 @@ export default function Home() {
   return (
     <>
       <HomeHero />
-      <AlbumShowcase projects={featuredProjects} />
-      <section className="page-shell mt-16">
+      <div className="page-shell py-12 sm:py-16">
+        <AlbumShowcase projects={featuredProjects} />
+      </div>
+      <section className="page-shell mt-8 sm:mt-14">
         <HomeFeaturedHeader />
         <ProjectList projects={visibleProjects} />
       </section>

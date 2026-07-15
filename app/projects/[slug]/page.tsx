@@ -1,5 +1,7 @@
 import { MdxContent } from "@/components/mdx/MdxContent";
-import { getContentBySlug } from "@/lib/content";
+import { LineSidebar } from "@/components/react-bits/LineSidebar";
+import { SplitText } from "@/components/react-bits/SplitText";
+import { extractDocumentHeadings, getContentBySlug } from "@/lib/content";
 import { projectHref } from "@/lib/project-routing";
 import {
   getPublicProjectBySlug,
@@ -50,36 +52,47 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
   const doc = getContentBySlug("projects", slug);
   const shouldRenderDoc = doc?.meta.visibility === "public";
+  const title = doc?.meta.title || project.title;
+  const headings = shouldRenderDoc ? extractDocumentHeadings(doc.source) : [];
+  const splitType = /[\u3400-\u9fff]/.test(title) ? "chars" : "words";
+  const titleSize = title.length > 56
+    ? "text-4xl leading-[1.08] sm:text-6xl sm:leading-[1.06] lg:text-7xl"
+    : "text-5xl leading-tight sm:text-7xl";
   const links = Object.entries(project.links ?? {}).filter(
     (entry): entry is [string, string] => Boolean(entry[1])
   );
 
   return (
-    <article className="page-shell py-20">
+    <article className="page-shell py-14 sm:py-20">
       <Link
-        className="text-sm text-white/46 transition hover:text-white"
+        className="group inline-flex items-center gap-2 text-sm text-white/46 transition hover:text-white"
         href="/projects"
       >
-        ← Back to projects
+        <span className="transition-transform duration-300 group-hover:-translate-x-1">←</span>
+        Back to projects
       </Link>
 
-      <div className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,0.72fr)_0.28fr]">
+      <div className="mt-9 grid gap-12 border-b border-white/[0.1] pb-14 lg:grid-cols-[minmax(0,0.72fr)_0.28fr] lg:pb-16">
         <div>
           <p className="text-sm uppercase text-antique/72">
             {project.year} / {project.type}
           </p>
-          <h1 className="mt-5 text-balance text-5xl font-medium leading-tight text-white sm:text-7xl">
-            {doc?.meta.title || project.title}
-          </h1>
+          <SplitText
+            className={`mt-5 text-balance font-medium text-white ${titleSize}`}
+            delay={splitType === "chars" ? 36 : 28}
+            splitType={splitType}
+            tag="h1"
+            text={title}
+          />
           <p className="mt-5 text-xl leading-8 text-white/62">
             {doc?.meta.subtitle || project.subtitle}
           </p>
-          <p className="mt-10 max-w-3xl text-lg leading-9 text-white/68">
+          <p className="mt-9 max-w-3xl text-lg leading-9 text-white/72">
             {doc?.meta.summary || project.description}
           </p>
         </div>
 
-        <aside className="border-t border-white/[0.08] pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+        <aside className="border-t border-white/[0.09] pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-1">
           <dl className="grid gap-5 text-sm">
             <div>
               <dt className="text-white/36">Status</dt>
@@ -106,8 +119,13 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         </aside>
       </div>
 
-      <section className="mt-20 grid gap-8 border-t border-white/[0.08] pt-10 lg:grid-cols-[0.22fr_minmax(0,0.78fr)]">
-        <h2 className="text-sm uppercase text-white/40">Document</h2>
+      <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8 pt-12 lg:grid-cols-[minmax(190px,0.24fr)_minmax(0,0.76fr)] lg:gap-12 lg:pt-16">
+        <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+          <p className="mb-3 text-xs uppercase text-white/34">
+            {headings.length ? "Contents" : "Document"}
+          </p>
+          <LineSidebar headings={headings} />
+        </aside>
         {shouldRenderDoc ? (
           <MdxContent source={doc.source} />
         ) : (
@@ -124,7 +142,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         <section className="mt-12 flex flex-wrap gap-4 border-t border-white/[0.08] pt-8 text-sm text-mist/82">
           {links.map(([label, href]) => (
             <a
-              className="border border-white/10 px-4 py-2 transition hover:border-mist/45 hover:text-white"
+            className="rounded-[6px] border border-white/10 bg-white/[0.025] px-4 py-2.5 transition hover:border-mist/45 hover:bg-white/[0.06] hover:text-white"
               href={href}
               key={label}
               rel={href.startsWith("http") ? "noreferrer" : undefined}
@@ -134,7 +152,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
             </a>
           ))}
           <Link
-            className="border border-white/10 px-4 py-2 text-white/50 transition hover:border-white/22 hover:text-white"
+            className="rounded-[6px] border border-white/10 bg-white/[0.025] px-4 py-2.5 text-white/50 transition hover:border-white/22 hover:bg-white/[0.06] hover:text-white"
             href={projectHref(project)}
           >
             permalink

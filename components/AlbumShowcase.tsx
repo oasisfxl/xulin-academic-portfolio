@@ -3,7 +3,9 @@
 import { ComingSoonModal } from "@/components/ComingSoonModal";
 import { useLanguage } from "@/components/LanguageProvider";
 import { Project } from "@/data/projects";
+import { projectCoverStyle } from "@/lib/covers";
 import { projectHref } from "@/lib/project-routing";
+import { LineWaves } from "@/components/react-bits/LineWaves";
 import {
   AnimatePresence,
   animate,
@@ -18,7 +20,6 @@ import {
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import {
-  CSSProperties,
   PointerEvent,
   useEffect,
   useRef,
@@ -33,14 +34,6 @@ type ShowcaseMode = "ring" | "preview";
 type PreviewPhase = "opening" | "open" | "closing";
 type CoverRect = { x: number; y: number; width: number; height: number };
 
-export const coverGradients = {
-  mist: "linear-gradient(135deg, #d6dae5 0%, #6d7891 34%, #1b1b20 72%, #080808 100%)",
-  antique: "linear-gradient(135deg, #d6c28d 0%, #6d6558 32%, #151516 70%, #080808 100%)",
-  iris: "linear-gradient(135deg, #b7a9d7 0%, #58647e 36%, #15161a 72%, #090909 100%)",
-  sage: "linear-gradient(135deg, #bdd1ce 0%, #687482 35%, #171614 70%, #090908 100%)",
-  pearl: "linear-gradient(135deg, #e3e0d7 0%, #8f879d 31%, #202025 72%, #080808 100%)",
-} as const;
-
 const dragDegreesPerPixel = 0.13;
 const idleVelocity = -2.15;
 const coverSpring = {
@@ -54,23 +47,6 @@ const overlayEase = [0.22, 1, 0.36, 1] as const;
 
 function mod(value: number, divisor: number) {
   return ((value % divisor) + divisor) % divisor;
-}
-
-function coverStyle(project: Project): CSSProperties {
-  if (project.cover) {
-    const overlay =
-      project.slug === "robust-humanoid-action-delay"
-        ? "linear-gradient(180deg, rgba(4,6,10,0.34), rgba(4,6,10,0.82))"
-        : "linear-gradient(180deg, rgba(0,0,0,0.04), rgba(0,0,0,0.42))";
-
-    return {
-      backgroundImage: `${overlay}, url(${project.cover})`,
-      backgroundPosition: "center",
-      backgroundSize: "cover",
-    };
-  }
-
-  return { backgroundImage: coverGradients[project.coverTone || "mist"] };
 }
 
 function projectIndex(projects: Project[], project: Project) {
@@ -158,7 +134,7 @@ function RingAlbumCard({
         ].join(" ")}
         data-album-project={project.slug}
         ref={registerCover}
-        style={coverStyle(project)}
+        style={projectCoverStyle(project)}
         type="button"
         whileHover={{ scale: 1.035, y: -5 }}
         whileTap={{ scale: 0.985 }}
@@ -303,7 +279,7 @@ function PreviewOverlay({
             }}
             key={project.slug}
             style={{
-              ...coverStyle(project),
+              ...projectCoverStyle(project),
               transformOrigin: direction === 1 ? "100% 50%" : "0% 50%",
             }}
             transition={{ duration: 0.46, ease: overlayEase }}
@@ -564,20 +540,43 @@ export function AlbumShowcase({ projects }: AlbumShowcaseProps) {
   if (projects.length === 0 || !activeProject || !selectedProject) return null;
 
   return (
-    <section aria-label="Featured research albums" className="relative overflow-hidden" ref={sectionRef}>
+    <section
+      aria-label="Featured research albums"
+      className="research-surface relative overflow-hidden rounded-[8px] border border-white/[0.09] bg-[#080809] shadow-[0_30px_100px_rgba(0,0,0,0.34)]"
+      ref={sectionRef}
+    >
       <motion.div
         animate={{ filter: mode === "preview" ? "blur(8px) saturate(0.72)" : "blur(0px) saturate(1)", opacity: mode === "preview" ? 0.36 : 1 }}
         className="transition-none"
         transition={{ duration: 0.38, ease: overlayEase }}
       >
         <motion.div
-          className="album-stage relative h-[440px] overflow-hidden sm:h-[500px] lg:h-[540px]"
+          className="album-stage relative h-[430px] overflow-hidden sm:h-[500px] lg:h-[540px]"
           initial={{ opacity: 0, scale: 0.985, y: 20 }}
           transition={{ duration: 0.72, ease: [0.16, 1, 0.3, 1] }}
           viewport={{ once: true, margin: "-60px" }}
           whileInView={{ opacity: 1, scale: 1, y: 0 }}
         >
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(170,183,207,0.1),transparent_42%),linear-gradient(90deg,#070707_0%,transparent_10%,transparent_90%,#070707_100%)]" />
+          <div className="pointer-events-none absolute inset-0 opacity-[0.16]">
+            {!shouldReduceMotion ? (
+              <LineWaves
+                brightness={0.11}
+                color1="#d9e0eb"
+                color2="#aebbd1"
+                color3="#c8b78a"
+                colorCycleSpeed={0.24}
+                edgeFadeWidth={0.12}
+                innerLineCount={28}
+                mouseInfluence={0.35}
+                outerLineCount={32}
+                rotation={-38}
+                speed={0.18}
+                warpIntensity={0.7}
+              />
+            ) : null}
+          </div>
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(170,183,207,0.07),rgba(8,8,9,0.2)_46%,rgba(8,8,9,0.86)_100%),linear-gradient(90deg,#080809_0%,transparent_12%,transparent_88%,#080809_100%)]" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#080809] via-[#080809]/90 to-transparent" />
           <div className="pointer-events-none absolute left-1/2 top-[29%] h-[46%] w-px -translate-x-1/2 -translate-y-1/2 bg-gradient-to-b from-transparent via-mist/12 to-transparent" />
           <div
             className="absolute inset-0 cursor-grab touch-pan-y select-none active:cursor-grabbing"

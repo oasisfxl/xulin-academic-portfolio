@@ -13,13 +13,13 @@ export default function ProjectsPage() {
   const projects = getVisibleProjects();
 
   return (
-    <section className="page-shell py-20">
+    <section className="page-shell py-14 sm:py-20">
       <PageIntro
         descriptionKey="projects.description"
         eyebrowKey="projects.eyebrow"
         titleKey="projects.title"
       />
-      <div className="mt-16">
+      <div className="mt-12 sm:mt-16">
         <ProjectList projects={projects} />
       </div>
     </section>

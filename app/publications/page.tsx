@@ -14,13 +14,13 @@ export default function PublicationsPage() {
   );
 
   return (
-    <section className="page-shell py-20">
+    <section className="page-shell py-14 sm:py-20">
       <PageIntro
         descriptionKey="publications.description"
         eyebrowKey="publications.eyebrow"
         titleKey="publications.title"
       />
-      <div className="mt-16">
+      <div className="mt-12 sm:mt-16">
         {publications.length > 0 ? (
           <ProjectList projects={publications} />
         ) : (

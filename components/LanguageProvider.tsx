@@ -23,6 +23,9 @@ type TranslationKey =
   | "hero.imitation"
   | "hero.policy"
   | "hero.evaluation"
+  | "hero.explore"
+  | "hero.readNotes"
+  | "hero.focus"
   | "showcase.return"
   | "showcase.locked"
   | "homeProjects.title"
@@ -59,6 +62,9 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "hero.imitation": "Imitation Learning",
     "hero.policy": "Policy Deployment",
     "hero.evaluation": "Robot Evaluation",
+    "hero.explore": "Explore research",
+    "hero.readNotes": "Read technical notes",
+    "hero.focus": "Research focus",
     "showcase.return": "Return to ring",
     "showcase.locked":
       "This project is currently being refined. A full detail page will be published when the writeup is ready.",
@@ -100,6 +106,9 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "hero.imitation": "模仿学习",
     "hero.policy": "策略部署",
     "hero.evaluation": "机器人评测",
+    "hero.explore": "浏览研究项目",
+    "hero.readNotes": "阅读技术笔记",
+    "hero.focus": "研究方向",
     "showcase.return": "返回展架",
     "showcase.locked": "该项目仍在完善中，完整详情页会在文档完成后开放。",
     "homeProjects.title": "研究索引",

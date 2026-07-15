@@ -2,6 +2,7 @@
 
 import type { ContentDocument, ContentVisibility } from "@/lib/content";
 import type { ProjectCoverTone, Project } from "@/data/projects";
+import { coverGradients } from "@/lib/covers";
 import { upload } from "@vercel/blob/client";
 import {
   motion,
@@ -71,7 +72,7 @@ type ContentStudioProps = {
 };
 
 const fieldClass =
-  "w-full border-b border-white/10 bg-transparent px-0 py-3 text-sm text-white outline-none transition-colors placeholder:text-white/24 focus:border-mist/55";
+  "mt-2 w-full rounded-[6px] border border-white/[0.09] bg-[#111114] px-3.5 py-3 text-sm text-white outline-none transition-[border-color,background-color,box-shadow] placeholder:text-white/24 focus:border-mist/45 focus:bg-[#141418] focus:shadow-[0_0_0_3px_rgba(170,183,207,0.06)]";
 
 const coverTones: Array<{ value: ProjectCoverTone; color: string }> = [
   { value: "mist", color: "#8d98b2" },
@@ -122,7 +123,7 @@ function LiquidCreateButton({
 
   return (
     <motion.button
-      className={`group relative isolate overflow-hidden rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+      className={`group relative isolate overflow-hidden rounded-[6px] border px-3 py-2 text-xs font-medium transition-colors ${
         tone === "mist"
           ? "border-mist/18 text-mist/78 hover:border-mist/38 hover:text-white"
           : "border-antique/18 text-antique/78 hover:border-antique/38 hover:text-white"
@@ -143,8 +144,8 @@ function LiquidCreateButton({
         style={{ background: glow }}
         transition={{ duration: hovered ? 0.16 : 0.3, ease: "easeOut" }}
       />
-      <span className="flex items-center gap-1.5">
-        <span className="text-base font-light leading-none">+</span>
+      <span className="flex items-center gap-2">
+        <span className="grid h-4 w-4 place-items-center rounded-full border border-current/30 text-sm font-light leading-none">+</span>
         {children}
       </span>
     </motion.button>
@@ -503,41 +504,42 @@ export function ContentStudio({
     draft.kind === "notes"
       ? `/notes/${draft.slug}`
       : `/projects/${draft.slug}`;
+  const coverPreviewStyle = draft.cover
+    ? {
+        backgroundImage: `linear-gradient(180deg,rgba(0,0,0,0.02),rgba(0,0,0,0.7)),url(${draft.cover})`,
+        backgroundPosition: "center",
+        backgroundSize: "cover",
+      }
+    : { backgroundImage: coverGradients[draft.coverTone] };
 
   return (
-    <section className="page-shell py-10 sm:py-14">
-      <header className="flex flex-col gap-4 border-b border-white/10 pb-7 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="h-2 w-2 rounded-full bg-emerald-300/80 shadow-[0_0_16px_rgba(110,231,183,0.5)]" />
-            <p className="text-xs uppercase text-white/40">Authenticated workspace</p>
+    <section className="min-h-screen bg-[#0a0a0b] text-white">
+      <header className="sticky top-0 z-40 flex min-h-[72px] flex-col gap-4 border-b border-white/[0.09] bg-[#0c0c0e]/95 px-5 py-4 backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between sm:px-7">
+        <div className="flex items-center gap-4">
+          <span className="grid h-9 w-9 place-items-center rounded-[6px] border border-white/10 bg-white/[0.04] text-base font-medium text-white">F</span>
+          <div>
+            <h1 className="text-base font-medium text-white">Content Studio</h1>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-300/80 shadow-[0_0_12px_rgba(110,231,183,0.45)]" />
+              <p className="text-[11px] text-white/36">Authenticated workspace</p>
+            </div>
           </div>
-          <h1 className="mt-3 text-3xl font-medium text-white sm:text-4xl">
-            Content Studio
-          </h1>
         </div>
-        <div className="flex items-center gap-5 text-right text-sm text-white/38">
+        <div className="flex items-center gap-4 text-sm text-white/38">
           <Link
-            className="text-white/52 transition-colors hover:text-white"
+            className="rounded-[6px] border border-white/[0.09] px-3 py-2 text-white/58 transition-colors hover:border-white/20 hover:bg-white/[0.05] hover:text-white"
             href="/"
           >
             View site ↗
           </Link>
-          <span className="h-5 w-px bg-white/10" />
-          <div>
-            <p>@{adminLogin}</p>
-            <a
-              className="mt-1 inline-block text-white/52 transition hover:text-white"
-              href="/api/auth/logout"
-            >
-              Sign out
-            </a>
-          </div>
+          <span className="hidden h-5 w-px bg-white/10 sm:block" />
+          <p className="hidden sm:block">@{adminLogin}</p>
+          <a className="text-white/52 transition hover:text-white" href="/api/auth/logout">Sign out</a>
         </div>
       </header>
 
-      <div className="grid lg:grid-cols-[230px_minmax(0,1fr)_260px]">
-        <aside className="border-b border-white/10 py-7 lg:border-b-0 lg:border-r lg:pr-6">
+      <div className="grid min-h-[calc(100svh-72px)] min-w-0 grid-cols-[minmax(0,1fr)] xl:grid-cols-[260px_minmax(560px,1fr)_310px]">
+        <aside className="max-h-[44svh] min-w-0 overflow-y-auto border-b border-white/[0.09] bg-[#0d0d0f] px-5 py-6 xl:sticky xl:top-[72px] xl:h-[calc(100svh-72px)] xl:max-h-none xl:self-start xl:border-b-0 xl:border-r xl:px-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xs uppercase text-white/38">Notes</h2>
             <LiquidCreateButton
@@ -547,13 +549,13 @@ export function ContentStudio({
               New note
             </LiquidCreateButton>
           </div>
-          <div className="mt-4 space-y-1">
+          <div className="mt-4 space-y-1.5">
             {notes.map((document) => (
               <button
-                className={`w-full border-l px-3 py-2 text-left text-sm transition-colors ${
+                className={`w-full rounded-[6px] border px-3 py-2.5 text-left text-sm transition-colors ${
                   draft.kind === "notes" && draft.slug === document.meta.slug
-                    ? "border-mist/70 bg-white/[0.045] text-white"
-                    : "border-transparent text-white/48 hover:border-white/18 hover:text-white/80"
+                    ? "border-mist/30 bg-mist/[0.08] text-white"
+                    : "border-transparent text-white/48 hover:border-white/[0.09] hover:bg-white/[0.035] hover:text-white/80"
                 }`}
                 key={document.meta.slug}
                 type="button"
@@ -576,7 +578,7 @@ export function ContentStudio({
               New project
             </LiquidCreateButton>
           </div>
-          <div className="mt-4 space-y-1">
+          <div className="mt-4 space-y-1.5">
             {managedProjects.map((project) => {
               const hasDocument = projectDocuments.some(
                 (document) => document.meta.slug === project.slug
@@ -586,10 +588,10 @@ export function ContentStudio({
 
               return (
                 <button
-                  className={`w-full border-l px-3 py-2 text-left text-sm transition-colors ${
+                  className={`w-full rounded-[6px] border px-3 py-2.5 text-left text-sm transition-colors ${
                     active
-                      ? "border-antique/70 bg-white/[0.045] text-white"
-                      : "border-transparent text-white/48 hover:border-white/18 hover:text-white/80"
+                      ? "border-antique/30 bg-antique/[0.07] text-white"
+                      : "border-transparent text-white/48 hover:border-white/[0.09] hover:bg-white/[0.035] hover:text-white/80"
                   }`}
                   key={project.slug}
                   type="button"
@@ -605,7 +607,7 @@ export function ContentStudio({
           </div>
         </aside>
 
-        <form className="py-7 lg:px-8" onSubmit={saveDocument}>
+        <form className="min-w-0 bg-[#0a0a0b] px-5 py-7 sm:px-8 xl:px-10" onSubmit={saveDocument}>
           <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-5">
             <p className="text-xs uppercase text-white/38">
               {draft.kind === "notes" ? "Note" : "Project document"}
@@ -615,10 +617,10 @@ export function ContentStudio({
             </span>
           </div>
 
-          <label className="mt-6 block text-xs text-white/38">
+          <label className="mt-6 block text-xs text-white/42">
             Title
             <input
-              className={`${fieldClass} text-lg`}
+              className={`${fieldClass} text-xl`}
               placeholder="Document title"
               value={draft.title}
               onChange={(event) => updateTitle(event.target.value)}
@@ -757,10 +759,13 @@ export function ContentStudio({
               </span>
               <input
                 checked={draft.featured}
-                className="h-4 w-4 accent-[#aab7cf]"
+                className="peer sr-only"
                 type="checkbox"
                 onChange={(event) => update("featured", event.target.checked)}
               />
+              <span className="relative h-6 w-11 shrink-0 rounded-full border border-white/12 bg-white/[0.06] transition peer-checked:border-mist/32 peer-checked:bg-mist/20 peer-checked:[&>span]:translate-x-5 peer-checked:[&>span]:bg-white peer-focus-visible:outline peer-focus-visible:outline-1 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-mist">
+                <span className="absolute left-1 top-1 h-3.5 w-3.5 rounded-full bg-white/55 transition-transform" />
+              </span>
             </label>
 
             <div className="mt-6">
@@ -769,7 +774,7 @@ export function ContentStudio({
                 {coverTones.map((tone) => (
                   <button
                     aria-label={`Use ${tone.value} cover palette`}
-                    className={`h-9 w-9 rounded-full border transition-transform hover:scale-110 ${draft.coverTone === tone.value ? "border-white shadow-[0_0_20px_rgba(170,183,207,0.34)]" : "border-white/12"}`}
+                    className={`h-9 w-9 rounded-[6px] border transition-transform hover:scale-105 ${draft.coverTone === tone.value ? "border-white shadow-[0_0_0_3px_rgba(170,183,207,0.12)]" : "border-white/12"}`}
                     key={tone.value}
                     style={{ backgroundColor: tone.color }}
                     title={tone.value}
@@ -811,7 +816,7 @@ export function ContentStudio({
           <label className="mt-7 block text-xs text-white/38">
             MDX body
             <textarea
-              className="mt-3 min-h-[520px] w-full resize-y border border-white/10 bg-black/20 p-5 font-mono text-sm leading-7 text-white/72 outline-none transition-colors placeholder:text-white/24 focus:border-mist/45"
+              className="mt-3 min-h-[560px] w-full resize-y rounded-[6px] border border-white/[0.09] bg-[#0f0f12] p-5 font-mono text-sm leading-7 text-white/76 outline-none transition-[border-color,box-shadow] placeholder:text-white/24 focus:border-mist/45 focus:shadow-[0_0_0_3px_rgba(170,183,207,0.06)]"
               spellCheck={false}
               value={draft.body}
               onChange={(event) => update("body", event.target.value)}
@@ -819,9 +824,22 @@ export function ContentStudio({
           </label>
         </form>
 
-        <aside className="border-t border-white/10 py-7 lg:border-l lg:border-t-0 lg:pl-7">
+        <aside className="min-w-0 border-t border-white/[0.09] bg-[#0d0d0f] px-5 py-6 xl:border-l xl:border-t-0">
+          <div className="xl:sticky xl:top-24">
+          <div
+            className="relative aspect-square w-full overflow-hidden rounded-[7px] border border-white/10 bg-[#111114] shadow-[0_20px_60px_rgba(0,0,0,0.3)]"
+            style={coverPreviewStyle}
+          >
+            <span className="absolute left-4 top-4 text-[10px] uppercase text-white/58">{draft.kind === "notes" ? "Note" : draft.type}</span>
+            <span className="absolute inset-x-4 bottom-4">
+              <span className="block text-base font-medium leading-tight text-white">{draft.title || "Untitled document"}</span>
+              <span className="mt-2 block text-[11px] uppercase text-white/48">{draft.kind === "notes" ? draft.date || "Draft" : `${draft.year || "Year"} / ${draft.status || "Status"}`}</span>
+            </span>
+          </div>
+
+          <p className="mb-3 mt-6 text-xs uppercase text-white/34">Publish</p>
           <motion.button
-            className="w-full bg-white px-4 py-3 text-sm font-medium text-black transition-colors hover:bg-mist"
+            className="w-full rounded-[6px] bg-white px-4 py-3 text-sm font-medium text-black transition-colors hover:bg-mist disabled:cursor-wait disabled:opacity-60"
             disabled={saveState === "saving"}
             type="button"
             whileTap={{ scale: 0.98 }}
@@ -831,7 +849,7 @@ export function ContentStudio({
           </motion.button>
           {draft.slug ? (
             <a
-              className="mt-3 block w-full border border-white/10 px-4 py-3 text-center text-sm text-white/58 transition-colors hover:border-white/24 hover:text-white"
+              className="mt-3 block w-full rounded-[6px] border border-white/10 bg-white/[0.025] px-4 py-3 text-center text-sm text-white/58 transition-colors hover:border-white/24 hover:bg-white/[0.05] hover:text-white"
               href={publicHref}
               rel="noreferrer"
               target="_blank"
@@ -852,7 +870,7 @@ export function ContentStudio({
 
           <div className="border-b border-white/10 py-6">
             <h2 className="text-xs uppercase text-white/38">Media</h2>
-            <label className="mt-4 block cursor-pointer border border-white/12 px-4 py-3 text-center text-sm text-white/52 transition-colors hover:border-antique/45 hover:text-white">
+            <label className="mt-4 block cursor-pointer rounded-[6px] border border-white/12 bg-white/[0.025] px-4 py-3 text-center text-sm text-white/52 transition-colors hover:border-antique/45 hover:bg-white/[0.05] hover:text-white">
               {draft.cover ? "Replace cover image" : "Upload cover image"}
               <input
                 accept="image/*"
@@ -862,7 +880,7 @@ export function ContentStudio({
                 onChange={(event) => uploadMedia(event, "cover")}
               />
             </label>
-            <label className="mt-4 block cursor-pointer border border-dashed border-white/14 px-4 py-7 text-center text-sm text-white/48 transition-colors hover:border-mist/45 hover:text-white">
+            <label className="mt-4 block cursor-pointer rounded-[6px] border border-dashed border-white/14 bg-black/10 px-4 py-7 text-center text-sm text-white/48 transition-colors hover:border-mist/45 hover:bg-white/[0.025] hover:text-white">
               {uploading ? "Uploading..." : "Insert image or video"}
               <input
                 accept="image/*,video/*"
@@ -891,6 +909,7 @@ export function ContentStudio({
             >
               Insert embed
             </motion.button>
+          </div>
           </div>
         </aside>
       </div>

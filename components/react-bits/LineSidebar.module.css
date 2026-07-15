@@ -1,0 +1,150 @@
+.sidebar {
+  --accent-color: #aab7cf;
+  --text-color: rgba(255, 255, 255, 0.42);
+  --marker-color: rgba(255, 255, 255, 0.18);
+  --marker-length: 38px;
+  --marker-gap: 12px;
+  --max-shift: 13px;
+  --item-gap: 15px;
+  --font-size: 0.78rem;
+  position: relative;
+  display: flex;
+  justify-content: flex-start;
+  padding-left: calc(var(--marker-length) + var(--marker-gap));
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--item-gap);
+  margin: 0;
+  padding: 0.75rem 0;
+  list-style: none;
+}
+
+.item {
+  --effect: 0;
+  position: relative;
+  cursor: pointer;
+}
+
+.item::before {
+  position: absolute;
+  inset: -7px -34px;
+  content: "";
+}
+
+.button {
+  position: relative;
+  display: inline-flex;
+  max-width: 190px;
+  align-items: baseline;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: color-mix(
+    in srgb,
+    var(--accent-color) calc(var(--effect) * 100%),
+    var(--text-color)
+  );
+  cursor: pointer;
+  font-size: var(--font-size);
+  line-height: 1.45;
+  text-align: left;
+  transform: translateX(calc(var(--effect) * var(--max-shift)));
+  transition: color 100ms linear, transform 100ms linear, background 100ms linear,
+    border-color 100ms linear;
+}
+
+.index {
+  margin-right: 0.55rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78em;
+  opacity: calc(0.5 + var(--effect) * 0.5);
+}
+
+.text {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.marker {
+  position: absolute;
+  top: 50%;
+  left: calc(-1 * var(--marker-length) - var(--marker-gap));
+  width: var(--marker-length);
+  height: 1px;
+  background-color: color-mix(
+    in srgb,
+    var(--accent-color) calc(var(--effect) * 100%),
+    var(--marker-color)
+  );
+  transform: translateY(-50%) scaleX(calc(0.68 + var(--effect) * 0.42));
+  transform-origin: left center;
+  transition: background-color 100ms linear, transform 100ms linear;
+}
+
+.item:not(:last-child)::after {
+  position: absolute;
+  top: calc(100% + var(--item-gap) / 2);
+  left: calc(-1 * var(--marker-length) - var(--marker-gap));
+  width: calc(var(--marker-length) * 0.42);
+  height: 1px;
+  background: var(--marker-color);
+  content: "";
+  opacity: 0.44;
+  transform: translateY(-50%) scaleX(calc(0.74 + var(--effect) * 0.42));
+  transform-origin: left center;
+  transition: transform 100ms linear;
+}
+
+.level3 .button {
+  font-size: calc(var(--font-size) * 0.92);
+}
+
+@media (max-width: 1023px) {
+  .sidebar {
+    width: calc(100vw - 40px);
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    padding: 0.2rem 0 0.85rem;
+    scrollbar-width: none;
+  }
+
+  .sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .list {
+    width: max-content;
+    flex-direction: row;
+    gap: 8px;
+    padding: 0;
+  }
+
+  .item::before,
+  .item::after,
+  .marker {
+    display: none;
+  }
+
+  .button {
+    max-width: 220px;
+    min-height: 34px;
+    border: 1px solid rgba(255, 255, 255, calc(0.08 + var(--effect) * 0.12));
+    padding: 0.45rem 0.75rem;
+    background: rgba(255, 255, 255, calc(0.025 + var(--effect) * 0.045));
+    transform: none;
+    white-space: nowrap;
+  }
+
+  .text {
+    display: block;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

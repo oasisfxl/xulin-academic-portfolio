@@ -14,11 +14,12 @@ export function PageTransition({ children }: PageTransitionProps) {
 
   return (
     <motion.main
-      animate={{ opacity: 1, y: 0 }}
-      initial={shouldReduceMotion ? false : { opacity: 0.92, y: 8 }}
+      animate={{ opacity: 1 }}
+      className="relative z-10"
+      initial={shouldReduceMotion ? false : { opacity: 0.965 }}
       key={pathname}
       transition={{
-        duration: shouldReduceMotion ? 0 : 0.28,
+        duration: shouldReduceMotion ? 0 : 0.2,
         ease: [0.22, 1, 0.36, 1],
       }}
     >

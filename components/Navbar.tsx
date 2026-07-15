@@ -109,19 +109,19 @@ export function Navbar() {
   }, [activeIndex, language, measureCursor]);
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-graphite-950/70 backdrop-blur-xl">
-      <nav className="page-shell flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-30 border-b border-white/[0.07] bg-[#09090a]/88 backdrop-blur-2xl">
+      <nav className="page-shell flex h-16 items-center justify-between gap-3">
         <Link
-          className="hidden text-sm font-medium text-white transition hover:text-mist sm:block"
+          className="hidden shrink-0 text-sm font-medium text-white transition hover:text-mist sm:block"
           href="/"
         >
           Xulin Fu
         </Link>
-        <div className="flex min-w-0 items-center gap-0.5 overflow-x-auto rounded-full border border-white/[0.08] bg-white/[0.035] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_18px_60px_rgba(0,0,0,0.28)] backdrop-blur-2xl sm:gap-1">
+        <div className="flex min-w-0 items-center gap-0.5 overflow-x-auto rounded-full border border-white/[0.09] bg-[#131315]/88 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_50px_rgba(0,0,0,0.24)] sm:gap-1">
           <div className="relative flex items-center gap-0.5 sm:gap-1" ref={trackRef}>
             <motion.span
               animate={{ opacity: cursor.visible ? 1 : 0, x: cursor.x, width: cursor.width }}
-              className="pointer-events-none absolute inset-y-0 left-0 rounded-full border border-white/10 bg-white/[0.105] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_10px_30px_rgba(0,0,0,0.18)]"
+              className="pointer-events-none absolute inset-y-0 left-0 rounded-full border border-white/12 bg-white/[0.115] shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_8px_24px_rgba(0,0,0,0.2)]"
               initial={false}
               transition={spring}
             >

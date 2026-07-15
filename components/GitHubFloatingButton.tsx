@@ -1,6 +1,6 @@
 export function GitHubFloatingButton() {
   return (
-    <div className="fixed bottom-5 left-5 z-40 flex flex-col gap-3">
+    <div className="fixed bottom-5 left-5 z-40 hidden flex-col gap-3 sm:flex">
       <a
         aria-label="Email Xulin Fu"
         className="grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/[0.035] text-white/66 shadow-[0_18px_60px_rgba(0,0,0,0.35)] backdrop-blur-md transition duration-300 hover:scale-105 hover:border-antique/45 hover:bg-white/[0.07] hover:text-white"

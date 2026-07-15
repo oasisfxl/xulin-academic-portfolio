@@ -12,13 +12,13 @@ export default function NotesPage() {
   const notes = getVisibleContent("notes");
 
   return (
-    <section className="page-shell py-20">
+    <section className="page-shell py-14 sm:py-20">
       <PageIntro
         descriptionKey="notes.description"
         eyebrowKey="notes.eyebrow"
         titleKey="notes.title"
       />
-      <div className="mt-16">
+      <div className="mt-12 sm:mt-16">
         <NoteList notes={notes} />
       </div>
     </section>

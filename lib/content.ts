@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
+import GithubSlugger from "github-slugger";
 import type { ProjectCoverTone } from "@/data/projects";
+import type { DocumentHeading } from "@/components/react-bits/LineSidebar";
 
 export type ContentKind = "projects" | "notes";
 export type ContentVisibility = "public" | "locked" | "hidden";
@@ -34,6 +36,43 @@ export type ContentDocument = {
   meta: ContentMeta;
   source: string;
 };
+
+function plainHeadingLabel(value: string) {
+  return value
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/<[^>]+>/g, "")
+    .replace(/[*_~`]/g, "")
+    .trim();
+}
+
+export function extractDocumentHeadings(source: string): DocumentHeading[] {
+  const slugger = new GithubSlugger();
+  const headings: DocumentHeading[] = [];
+  let fence: "```" | "~~~" | null = null;
+
+  source.split("\n").forEach((line) => {
+    const fenceMatch = line.match(/^\s*(```|~~~)/);
+    if (fenceMatch) {
+      const marker = fenceMatch[1] as "```" | "~~~";
+      fence = fence === marker ? null : fence ?? marker;
+      return;
+    }
+    if (fence) return;
+
+    const match = line.match(/^(#{1,3})\s+(.+?)\s*#*\s*$/);
+    if (!match) return;
+    const label = plainHeadingLabel(match[2]);
+    if (!label) return;
+    headings.push({
+      id: slugger.slug(label),
+      label,
+      level: match[1].length,
+    });
+  });
+
+  return headings;
+}
 
 const contentRoot = path.join(process.cwd(), "content");
 

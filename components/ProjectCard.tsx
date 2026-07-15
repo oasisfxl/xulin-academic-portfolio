@@ -1,11 +1,12 @@
 "use client";
 
 import { Project } from "@/data/projects";
+import { projectCoverStyle } from "@/lib/covers";
 import { projectHref } from "@/lib/project-routing";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { MouseEvent } from "react";
+import type { MouseEvent, PointerEvent } from "react";
 
 const MotionLink = motion.create(Link);
 
@@ -75,10 +76,16 @@ export function ProjectCard({ project, onLockedProject }: ProjectCardProps) {
     openProject();
   }
 
+  function trackSpotlight(event: PointerEvent<HTMLElement>) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty("--spot-x", `${event.clientX - rect.left}px`);
+    event.currentTarget.style.setProperty("--spot-y", `${event.clientY - rect.top}px`);
+  }
+
   return (
     <motion.article
       aria-label={`${project.title}${project.visibility === "locked" ? ", Coming soon" : ""}`}
-      className="group relative -mx-4 grid cursor-pointer gap-5 overflow-hidden border-t border-white/[0.08] px-4 py-8 transition-[background-color,border-color,box-shadow] duration-300 hover:z-10 hover:border-mist/36 hover:bg-white/[0.05] hover:shadow-[0_20px_70px_rgba(0,0,0,0.28)] focus-visible:z-10 focus-visible:bg-white/[0.05] sm:grid-cols-[116px_minmax(0,1fr)]"
+      className="spotlight-row group grid cursor-pointer gap-5 overflow-hidden rounded-[8px] border border-white/[0.08] bg-[#101012]/90 p-4 transition-[background-color,border-color,box-shadow] duration-300 hover:z-10 hover:border-mist/28 hover:bg-[#141417] hover:shadow-[0_22px_70px_rgba(0,0,0,0.3)] focus-visible:z-10 focus-visible:bg-[#141417] sm:grid-cols-[96px_minmax(0,1fr)] sm:p-5"
       initial={{ opacity: 0, y: 18 }}
       whileHover={{ scale: 1.01, y: -4 }}
       whileTap={{ scale: 0.995, y: -1 }}
@@ -86,14 +93,22 @@ export function ProjectCard({ project, onLockedProject }: ProjectCardProps) {
       viewport={{ once: true, margin: "-80px" }}
       transition={{ type: "spring", stiffness: 320, damping: 28, mass: 0.72 }}
       onClick={handleCardClick}
+      onPointerMove={trackSpotlight}
     >
       <span className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100">
         <span className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-mist/36 to-transparent" />
         <span className="absolute inset-y-0 left-0 w-px bg-mist/28" />
       </span>
-      <div className="flex items-center gap-3 text-sm text-white/42 sm:block">
-        <p>{project.year}</p>
-        <p className="sm:mt-2">{project.type}</p>
+      <div>
+        <div
+          aria-hidden="true"
+          className="aspect-square w-20 overflow-hidden rounded-[5px] border border-white/10 bg-graphite-850 shadow-[0_12px_34px_rgba(0,0,0,0.3)] sm:w-24"
+          style={projectCoverStyle(project)}
+        />
+        <div className="mt-3 flex items-center gap-2 text-xs text-white/38 sm:block">
+          <p>{project.year}</p>
+          <p className="sm:mt-1">{project.type}</p>
+        </div>
       </div>
       <div>
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">

@@ -1,9 +1,5 @@
-import { Footer } from "@/components/Footer";
-import { GitHubFloatingButton } from "@/components/GitHubFloatingButton";
 import { LanguageProvider } from "@/components/LanguageProvider";
-import { LoadingIntro } from "@/components/LoadingIntro";
-import { Navbar } from "@/components/Navbar";
-import { PageTransition } from "@/components/PageTransition";
+import { SiteFrame } from "@/components/SiteFrame";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -25,11 +21,7 @@ export default function RootLayout({
     <html data-scroll-behavior="smooth" lang="en">
       <body>
         <LanguageProvider>
-          <LoadingIntro />
-          <Navbar />
-          <PageTransition>{children}</PageTransition>
-          <Footer />
-          <GitHubFloatingButton />
+          <SiteFrame>{children}</SiteFrame>
         </LanguageProvider>
       </body>
     </html>
