@@ -19,8 +19,12 @@ type TranslationKey =
   | "nav.about"
   | "hero.field"
   | "hero.tagline"
+  | "hero.embodied"
+  | "hero.robotLearning"
   | "hero.humanoid"
   | "hero.imitation"
+  | "hero.vla"
+  | "hero.diffusion"
   | "hero.policy"
   | "hero.evaluation"
   | "hero.explore"
@@ -58,8 +62,12 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "hero.field": "Embodied Intelligence / Robot Learning",
     "hero.tagline":
       "I build and analyze robot learning systems for deployable humanoid manipulation.",
+    "hero.embodied": "Embodied Intelligence",
+    "hero.robotLearning": "Robot Learning",
     "hero.humanoid": "Humanoid Manipulation",
     "hero.imitation": "Imitation Learning",
+    "hero.vla": "Vision-Language-Action Models",
+    "hero.diffusion": "Diffusion Policy",
     "hero.policy": "Policy Deployment",
     "hero.evaluation": "Robot Evaluation",
     "hero.explore": "Explore research",
@@ -102,8 +110,12 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     "nav.about": "关于",
     "hero.field": "具身智能 / 机器人学习",
     "hero.tagline": "我构建并分析面向真实部署的人形机器人操作学习系统。",
+    "hero.embodied": "具身智能",
+    "hero.robotLearning": "机器人学习",
     "hero.humanoid": "人形机器人操作",
     "hero.imitation": "模仿学习",
+    "hero.vla": "视觉语言动作模型",
+    "hero.diffusion": "扩散策略",
     "hero.policy": "策略部署",
     "hero.evaluation": "机器人评测",
     "hero.explore": "浏览研究项目",

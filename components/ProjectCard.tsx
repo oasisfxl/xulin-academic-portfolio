@@ -55,7 +55,10 @@ function ProjectTitle({
   );
 }
 
-export function ProjectCard({ project, onLockedProject }: ProjectCardProps) {
+export function ProjectCard({
+  project,
+  onLockedProject,
+}: ProjectCardProps) {
   const router = useRouter();
   const links = Object.entries(project.links ?? {}).filter(
     (entry): entry is [string, string] => Boolean(entry[1])
@@ -86,20 +89,20 @@ export function ProjectCard({ project, onLockedProject }: ProjectCardProps) {
     <motion.article
       aria-label={`${project.title}${project.visibility === "locked" ? ", Coming soon" : ""}`}
       className="spotlight-row group grid cursor-pointer gap-5 overflow-hidden rounded-[8px] border border-white/[0.08] bg-[#101012]/90 p-4 transition-[background-color,border-color,box-shadow] duration-300 hover:z-10 hover:border-mist/28 hover:bg-[#141417] hover:shadow-[0_22px_70px_rgba(0,0,0,0.3)] focus-visible:z-10 focus-visible:bg-[#141417] sm:grid-cols-[96px_minmax(0,1fr)] sm:p-5"
-      initial={{ opacity: 0, y: 18 }}
-      whileHover={{ scale: 1.01, y: -4 }}
-      whileTap={{ scale: 0.995, y: -1 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, scale: 0.965, y: 16 }}
+      whileHover={{ scale: 1.006, x: 5 }}
+      whileTap={{ scale: 0.995, x: 2 }}
+      whileInView={{ opacity: 1, scale: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
       transition={{ type: "spring", stiffness: 320, damping: 28, mass: 0.72 }}
       onClick={handleCardClick}
       onPointerMove={trackSpotlight}
     >
-      <span className="pointer-events-none absolute inset-0 opacity-0 transition duration-300 group-hover:opacity-100">
+      <span className="pointer-events-none absolute inset-0 z-[3] opacity-0 transition duration-300 group-hover:opacity-100">
         <span className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-mist/36 to-transparent" />
         <span className="absolute inset-y-0 left-0 w-px bg-mist/28" />
       </span>
-      <div>
+      <div className="relative z-[2]">
         <div
           aria-hidden="true"
           className="aspect-square w-20 overflow-hidden rounded-[5px] border border-white/10 bg-graphite-850 shadow-[0_12px_34px_rgba(0,0,0,0.3)] sm:w-24"
@@ -110,7 +113,7 @@ export function ProjectCard({ project, onLockedProject }: ProjectCardProps) {
           <p className="sm:mt-1">{project.type}</p>
         </div>
       </div>
-      <div>
+      <div className="relative z-[2]">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             <ProjectTitle

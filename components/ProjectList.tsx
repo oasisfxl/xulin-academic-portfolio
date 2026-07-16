@@ -14,7 +14,7 @@ export function ProjectList({ projects }: ProjectListProps) {
 
   return (
     <>
-      <div className="grid gap-3">
+      <div className="relative grid gap-3">
         {projects.map((project) => (
           <ProjectCard
             key={project.slug}

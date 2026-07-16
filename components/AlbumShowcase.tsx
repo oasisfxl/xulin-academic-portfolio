@@ -114,14 +114,24 @@ function RingAlbumCard({
   onSelect: (project: Project, source: HTMLButtonElement) => void;
   registerCover: (element: HTMLButtonElement | null) => void;
 }) {
+  const coverRef = useRef<HTMLButtonElement | null>(null);
+
   return (
     <motion.div
       animate={{ opacity: dimmed ? 0.16 : 1 }}
-      className="album-orbit-card absolute left-1/2 top-1/2"
+      className="album-orbit-card absolute left-1/2 top-1/2 cursor-pointer"
+      data-album-hit={project.slug}
       style={{
         transform: `rotateY(${angle}deg) translateZ(var(--album-ring-radius))`,
       }}
       transition={{ duration: 0.34, ease: overlayEase }}
+      onMouseEnter={() => onHover(true)}
+      onMouseLeave={() => onHover(false)}
+      onPointerUp={(event) => {
+        if (event.button === 0 && coverRef.current) {
+          onSelect(project, coverRef.current);
+        }
+      }}
     >
       <motion.button
         aria-label={`Preview ${project.title}`}
@@ -133,7 +143,10 @@ function RingAlbumCard({
             : "border-transparent opacity-70 hover:opacity-100 hover:shadow-[0_0_32px_rgba(170,183,207,0.2),0_34px_100px_rgba(0,0,0,0.5)]",
         ].join(" ")}
         data-album-project={project.slug}
-        ref={registerCover}
+        ref={(element) => {
+          coverRef.current = element;
+          registerCover(element);
+        }}
         style={projectCoverStyle(project)}
         type="button"
         whileHover={{ scale: 1.035, y: -5 }}
@@ -145,11 +158,6 @@ function RingAlbumCard({
             onSelect(project, event.currentTarget);
           }
         }}
-        onPointerUp={(event) => {
-          onSelect(project, event.currentTarget);
-        }}
-        onMouseEnter={() => onHover(true)}
-        onMouseLeave={() => onHover(false)}
       >
         <CoverArtwork index={index} project={project} compact />
       </motion.button>
@@ -414,7 +422,9 @@ export function AlbumShowcase({ projects }: AlbumShowcaseProps) {
     const seconds = delta / 1000;
     const currentVelocity = angularVelocity.current;
     const resting = Math.abs(currentVelocity) < 0.08;
-    const ambientVelocity = hovered ? idleVelocity * 0.28 : idleVelocity;
+    // Holding the pointer over any exposed cover freezes the archive so even
+    // a narrow side face remains a stable click target.
+    const ambientVelocity = hovered ? 0 : idleVelocity;
     const appliedVelocity = resting ? ambientVelocity : currentVelocity;
     rotation.set(rotation.get() + appliedVelocity * seconds);
     angularVelocity.current = resting ? 0 : currentVelocity * Math.pow(0.91, delta / 16.67);
@@ -604,7 +614,7 @@ export function AlbumShowcase({ projects }: AlbumShowcaseProps) {
               ))}
             </motion.div>
           </div>
-          <div className="absolute inset-x-0 bottom-4 z-10 flex items-center justify-center gap-3 px-4 sm:bottom-6">
+          <div className="absolute inset-x-0 bottom-4 z-10 mx-auto grid w-[calc(100%_-_2rem)] max-w-[680px] grid-cols-[40px_minmax(0,1fr)_40px] items-center gap-3 sm:bottom-6">
             <motion.button
               aria-label="Previous project cover"
               className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-black/20 text-white/60 backdrop-blur-xl transition-colors hover:border-mist/40 hover:bg-white/[0.06] hover:text-white"
@@ -617,7 +627,8 @@ export function AlbumShowcase({ projects }: AlbumShowcaseProps) {
             </motion.button>
             <motion.button
               aria-label={`Preview ${activeProject.title}`}
-              className="group min-w-0 max-w-[min(70vw,520px)] px-3 py-2 text-center"
+              className="group min-w-0 px-3 py-2 text-center"
+              data-testid="album-active-preview"
               type="button"
               whileTap={{ scale: 0.98 }}
               onClick={() =>

@@ -123,8 +123,8 @@ export default async function NoteDetailPage({ params }: NotePageProps) {
         </aside>
       </div>
 
-      <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8 pt-12 lg:grid-cols-[minmax(190px,0.24fr)_minmax(0,0.76fr)] lg:gap-12 lg:pt-16">
-        <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+      <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-8 pt-12 md:grid-cols-[minmax(190px,0.24fr)_minmax(0,0.76fr)] md:gap-10 md:pt-16 lg:gap-12">
+        <aside className="min-w-0 md:sticky md:top-24 md:self-start">
           <p className="mb-3 text-xs uppercase text-white/34">Contents</p>
           <LineSidebar headings={headings} />
         </aside>

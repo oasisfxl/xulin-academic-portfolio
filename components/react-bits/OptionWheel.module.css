@@ -1,0 +1,85 @@
+.wheel {
+  --ow-text-color: #777b84;
+  --ow-active-color: #f4f5f7;
+  --ow-font-size: 2.35rem;
+  --ow-inset: 72px;
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  outline: none;
+}
+
+.wheel::before,
+.wheel::after {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  left: 0;
+  height: 25%;
+  content: "";
+  pointer-events: none;
+}
+
+.wheel::before {
+  top: 0;
+  background: linear-gradient(to bottom, #09090a 12%, transparent);
+}
+
+.wheel::after {
+  bottom: 0;
+  background: linear-gradient(to top, #09090a 12%, transparent);
+}
+
+.dragging {
+  cursor: grabbing;
+}
+
+.item {
+  position: absolute;
+  top: 50%;
+  left: var(--ow-inset);
+  color: color-mix(
+    in srgb,
+    var(--ow-active-color) calc(var(--ow-p, 0) * 100%),
+    var(--ow-text-color)
+  );
+  cursor: pointer;
+  font-size: var(--ow-font-size);
+  font-weight: 300;
+  line-height: 1;
+  transform-origin: left center;
+  white-space: nowrap;
+  will-change: transform, opacity, filter;
+}
+
+.right .item {
+  right: var(--ow-inset);
+  left: auto;
+  transform-origin: right center;
+}
+
+.selected {
+  font-weight: 520;
+}
+
+.wheel:focus-visible {
+  outline: 1px solid rgba(174, 187, 209, 0.66);
+  outline-offset: -10px;
+}
+
+@media (max-width: 639px) {
+  .wheel {
+    --ow-inset: 28px;
+  }
+
+  .item {
+    max-width: calc(100vw - 80px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

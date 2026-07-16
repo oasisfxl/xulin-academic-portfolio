@@ -13,7 +13,11 @@ export function SiteFrame({ children }: { children: ReactNode }) {
   const isStudio = pathname.startsWith("/studio");
 
   if (isStudio) {
-    return <div className="studio-route min-h-screen">{children}</div>;
+    return (
+      <div className="studio-route min-h-screen">
+        <PageTransition>{children}</PageTransition>
+      </div>
+    );
   }
 
   return (
