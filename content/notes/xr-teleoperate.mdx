@@ -1,0 +1,488 @@
+---
+title: 宇树XR_teleoperate遥操操作
+subtitle: 宇树官方遥操方案，用于宇树G1的manipulation任务示教数据采集
+summary: 操作笔记，严格区分：仿真两个终端、真机两个终端、头显网址、录制按键和退出顺序。命令按本机器的实际路径、IP 和网卡名称填写。
+visibility: public
+tags:
+  - Robot Learning
+type: Note
+featured: false
+coverTone: mist
+date: '2026-07-21'
+updated: '2026-07-21'
+---
+# 宇树 G1 + Dex3 XR 遥操操作笔记
+
+适用于当前设备：
+
+- 机器人：G1 29DoF
+- 灵巧手：Dex3
+- 输入：裸手追踪
+- 主机/头显网络 IP：`192.168.2.170`
+- 机器人侧主机 IP：`192.168.123.200`
+- 机器人 PC2：`192.168.123.164`
+- 机器人 DDS 网卡：`enx6c1ff7df9277`
+- 相机：头部双目 + 左右腕部相机
+- 仓库：`/home/xulinfu/projects/xr_teleoperate`
+- 本地版本：`7dc9aa1`
+
+注意：本地代码参数是 `--input-mode=hand`，不要使用 README 旧示例中的 `--xr-mode=hand`。
+
+---
+
+## 一、通用性能设置
+
+每次打开遥操终端后执行：
+
+```bash
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+```
+
+否则 CasADi/IPOPT 可能启动大量计算线程，造成遥操高延迟。
+
+可在每次开机后将 CPU 切到高性能模式：
+
+```bash
+sudo cpupower frequency-set -g performance
+```
+
+采集时尽量关闭：
+
+- 其他 GPU/CPU 训练任务
+- 不需要的 Isaac Sim
+- 大规模文件复制和压缩任务
+
+---
+
+# 二、启动仿真遥操
+
+仿真需要两个终端：
+
+```text
+终端1：Isaac Sim
+终端2：XR 遥操程序
+```
+
+仿真相机服务由 Isaac Sim 自动提供，不需要额外启动 `teleimager-server`。
+
+## 终端 1：启动 Isaac Sim
+
+```bash
+conda activate unitree_sim_env
+cd /home/xulinfu/projects/unitree_sim_isaaclab
+
+python sim_main.py \
+  --device cpu \
+  --enable_cameras \
+  --task Isaac-PickPlace-Cylinder-G129-Dex3-Joint \
+  --enable_dex3_dds \
+  --robot_type g129
+```
+
+Isaac Sim 窗口出现后：
+
+1. 用鼠标在仿真窗口中点击一次。
+2. 确认仿真开始运行。
+3. 等待终端出现类似：
+
+```text
+controller started, start main loop...
+```
+
+这里没有加入 `--headless`，因此会显示仿真 GUI。
+
+## 终端 2：启动仿真遥操，不录制
+
+```bash
+conda activate tv
+cd /home/xulinfu/projects/xr_teleoperate/teleop
+
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+
+python teleop_hand_and_arm.py \
+  --input-mode=hand \
+  --display-mode=immersive \
+  --arm=G1_29 \
+  --ee=dex3 \
+  --sim \
+  --frequency=30 \
+  --img-server-ip=192.168.2.170
+```
+
+## 终端 2：启动仿真遥操并录制
+
+```bash
+conda activate tv
+cd /home/xulinfu/projects/xr_teleoperate/teleop
+
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+
+python teleop_hand_and_arm.py \
+  --input-mode=hand \
+  --display-mode=immersive \
+  --arm=G1_29 \
+  --ee=dex3 \
+  --sim \
+  --record \
+  --frequency=30 \
+  --img-server-ip=192.168.2.170 \
+  --task-dir=/home/xulinfu/projects/xr_teleoperate/teleop/utils/data \
+  --task-name=sim_pick_cylinder \
+  --task-goal="Pick up the cylinder and place it at the target position." \
+  --task-desc="G1 29DoF with Dex3 in Isaac Sim." \
+  --task-steps="Approach the cylinder; grasp it; lift it; move to the target; release it."
+```
+
+可以根据具体任务修改：
+
+```text
+--task-name
+--task-goal
+--task-desc
+--task-steps
+```
+
+---
+
+# 三、启动真机遥操
+
+真机同样需要两个终端：
+
+```text
+终端1：真机三路相机服务
+终端2：XR 遥操程序
+```
+
+在启动真机前必须关闭 Isaac Sim，因为 Isaac 会占用：
+
+```text
+55555
+55556
+55557
+60001
+```
+
+## 1. 检查机器人网络
+
+插好机器人网线后执行：
+
+```bash
+ip -br addr show enx6c1ff7df9277
+```
+
+正常应显示类似：
+
+```text
+enx6c1ff7df9277  UP  192.168.123.200/24
+```
+
+当前未连接机器人时，该网卡可能显示为 `DOWN`。
+
+检查 PC2：
+
+```bash
+ping -c 3 192.168.123.164
+```
+
+必须能够收到回复。
+
+## 2. 准备机器人运动模式
+
+如果 G1 正常站立，建议使用 `--motion` 模式。
+
+按照 R3 遥控器流程：
+
+```text
+L2 + B   → 阻尼模式
+L2 + ↑   → 锁定站立
+R1 + X   → Regular mode
+```
+
+只支持 Regular mode，不要使用 `R2 + A` Running mode。
+
+如果机器人被可靠悬挂或固定在支架上，才可以考虑不加 `--motion`，进入 Debug mode。
+
+## 终端 1：启动真机相机服务
+
+三路相机接在当前服务器上，因此图像服务器 IP 是 `192.168.2.170`，不是机器人 PC2。
+
+```bash
+conda activate tv
+cd /home/xulinfu/projects/xr_teleoperate/teleop/teleimager
+
+teleimager-server
+```
+
+正常应启动：
+
+| 相机 | ZMQ 端口 | WebRTC 端口 |
+|---|---:|---:|
+| 头部双目 | 55555 | 60001 |
+| 左腕 | 55556 | 60002 |
+| 右腕 | 55557 | 60003 |
+
+不要同时运行两个 `teleimager-server`。
+
+## 终端 2：真机遥操，不录制
+
+适用于先检查跟随和安全性：
+
+```bash
+conda activate tv
+cd /home/xulinfu/projects/xr_teleoperate/teleop
+
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+
+python teleop_hand_and_arm.py \
+  --input-mode=hand \
+  --display-mode=immersive \
+  --arm=G1_29 \
+  --ee=dex3 \
+  --motion \
+  --frequency=30 \
+  --img-server-ip=192.168.2.170 \
+  --network-interface=enx6c1ff7df9277
+```
+
+## 终端 2：真机遥操并采集数据
+
+```bash
+conda activate tv
+cd /home/xulinfu/projects/xr_teleoperate/teleop
+
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export NUMEXPR_NUM_THREADS=1
+
+python teleop_hand_and_arm.py \
+  --input-mode=hand \
+  --display-mode=immersive \
+  --arm=G1_29 \
+  --ee=dex3 \
+  --motion \
+  --record \
+  --frequency=30 \
+  --img-server-ip=192.168.2.170 \
+  --network-interface=enx6c1ff7df9277 \
+  --task-dir=/home/xulinfu/projects/xr_teleoperate/teleop/utils/data \
+  --task-name=real_pick_cylinder \
+  --task-goal="Pick up the cylinder and place it at the target position." \
+  --task-desc="G1 29DoF with Dex3, bare-hand XR teleoperation." \
+  --task-steps="Approach the cylinder; grasp it; lift it; move to the target; release it."
+```
+
+真机命令的关键点：
+
+- 没有 `--sim`
+- 正常站立时带 `--motion`
+- DDS 网卡是 `enx6c1ff7df9277`
+- 图像服务器是 `192.168.2.170`
+
+## 支架/悬挂模式
+
+如果机器人被可靠支撑，可以从真机命令中删除：
+
+```bash
+--motion
+```
+
+程序会进入 Debug mode，并直接锁定/控制其他关节。没有支撑的站立机器人不要贸然这样做。
+
+---
+
+# 四、头显操作
+
+仿真和真机使用相同的网址。
+
+## 1. 信任图像服务证书
+
+头显浏览器访问：
+
+```text
+https://192.168.2.170:60001
+```
+
+首次使用时：
+
+1. 选择高级选项。
+2. 继续访问不安全页面。
+3. 点击左上角 `Start`。
+4. 确认能看到头部相机画面。
+
+## 2. 进入 XR 遥操页面
+
+访问：
+
+```text
+https://192.168.2.170:8012/?ws=wss://192.168.2.170:8012
+```
+
+如果 PICO 浏览器无法直接连接，可以尝试：
+
+```text
+https://vuer.ai?ws=wss://192.168.2.170:8012
+```
+
+随后：
+
+1. 点击 `Virtual Reality`。
+2. 允许 WebXR 和手部追踪权限。
+3. 确认终端出现：
+
+```text
+websocket is connected
+Uplink task running
+```
+
+4. 双臂摆到接近机器人当前姿态的位置。
+5. 再回到遥操终端操作键盘。
+
+---
+
+# 五、键盘控制
+
+遥操终端中的按键：
+
+| 按键 | 功能 |
+|---|---|
+| `r` | 开始机器人/仿真跟随 |
+| `s` | 开始录制 |
+| 再次 `s` | 停止并保存当前 episode |
+| `q` | 正常退出遥操 |
+
+`--record` 只代表启用录制功能，不会在启动后自动保存。
+
+正确采集顺序：
+
+```text
+启动程序
+→ 连接头显
+→ 摆好初始姿态
+→ 按 r 开始跟随
+→ 摆好物体
+→ 按 s 开始录制
+→ 完成任务
+→ 再按 s 停止并保存
+→ 等待 Episode saved successfully
+→ 恢复物体位置
+→ 按 s 采集下一条
+→ 最后按 q 退出
+```
+
+不要在 episode 尚未保存完成时退出。
+
+---
+
+# 六、数据保存位置
+
+如果使用：
+
+```bash
+--task-dir=/home/xulinfu/projects/xr_teleoperate/teleop/utils/data
+--task-name=real_pick_cylinder
+```
+
+数据将保存到：
+
+```text
+/home/xulinfu/projects/xr_teleoperate/teleop/utils/data/real_pick_cylinder/
+├── episode_0001/
+├── episode_0002/
+├── episode_0003/
+└── ...
+```
+
+每个 episode 包含：
+
+```text
+episode_xxxx/
+├── colors/
+├── depths/
+├── audios/
+└── data.json
+```
+
+当前头部相机为双目，因此录制时实际有四个 RGB 视角：
+
+```text
+color_0：头部左目
+color_1：头部右目
+color_2：左腕相机
+color_3：右腕相机
+```
+
+---
+
+# 七、正常退出顺序
+
+## 仿真
+
+1. 如果正在录制，先按 `s` 保存。
+2. 在遥操终端按 `q`。
+3. 等待遥操程序完全退出。
+4. 再关闭 Isaac Sim。
+
+## 真机
+
+1. 停止录制并等待保存成功。
+2. 将双臂移动到接近自然下垂/运控姿态。
+3. 在遥操终端按 `q`。
+4. 等待机器人双臂完成回位。
+5. 再停止 `teleimager-server`。
+
+真机不要优先使用 `kill -9`，否则机器人可能无法正常完成回位流程。
+
+---
+
+# 八、常见问题检查
+
+## 端口是否被占用
+
+```bash
+ss -lntp | grep -E ':(55555|55556|55557|60001|60002|60003|8012)\b'
+```
+
+## 是否残留 Isaac Sim
+
+```bash
+ps -ef | grep sim_main.py | grep -v grep
+```
+
+## 是否残留遥操进程
+
+```bash
+ps -ef | grep teleop_hand_and_arm.py | grep -v grep
+```
+
+## 是否残留图像服务器
+
+```bash
+ps -ef | grep teleimager | grep -v grep
+```
+
+## 遥操延迟很高
+
+依次检查：
+
+1. 四个线程限制变量是否设置。
+2. CPU 是否为 `performance` governor。
+3. Isaac、RoboTwin、训练任务是否仍在运行。
+4. 三路相机是否有帧积压。
+5. 是否出现 `Head/Left/Right image is None`。
+6. 头显与服务器网络延迟是否异常。
+7. 不要把频率从 30 Hz 盲目提高到 60 Hz。
+
+官方参考：[xr_teleoperate README](https://github.com/unitreerobotics/xr_teleoperate)、[Motion 模式说明](https://github.com/unitreerobotics/xr_teleoperate/wiki/Motion)。
