@@ -1,0 +1,226 @@
+---
+title: Unitree G1 Dex3：ACT 部署与 Dataset Replay
+subtitle: ''
+summary: 宇树G1ACT部署笔记
+visibility: public
+tags:
+  - Robot Learning
+type: Note
+featured: true
+coverTone: pearl
+date: '2026-07-23'
+updated: '2026-07-23'
+---
+## 1. 固定配置
+
+- Conda 环境：`unitree_lerobot`
+- 官方部署代码：`/home/xulinfu/projects/unitree_lerobot_ipc`
+- 图像服务地址：`192.168.2.170`
+- G1 DDS 网卡：`enx6c1ff7df9277`
+- 机器人：`G1_29`
+- 灵巧手：`dex3`
+- 控制频率：`30 Hz`
+- 常规运控模式：`mode_machine=5`，遥控器使用 `R1+X`
+- 头部相机：双目合并传输，部署时拆成 `cam_left_high` 和 `cam_right_high`
+- 右腕相机：ZMQ `55556`，WebRTC `60002`
+- 左腕相机：ZMQ `55557`，WebRTC `60003`
+- ACT 重规划间隔：`--policy.n_action_steps=10`，即约每 `0.33 s` 重新看图规划
+- 数据集时间戳容差：`--dataset_tolerance_s=0.001`
+
+任何真机命令执行前，必须保证实体急停可立即触达，并且同一时间只能运行一个 ACT、遥操或 replay 控制进程。
+
+## 2. 每次真机部署前的检查
+
+一句话：确认 G1 网卡已经连接，必须看到 `UP/LOWER_UP` 和 `192.168.123.200/24`。
+
+```bash
+ip -br addr show enx6c1ff7df9277
+```
+
+一句话：如果图像服务尚未运行，在单独终端启动服务并保持终端不关闭。
+
+```bash
+cd /home/xulinfu/projects/xr_teleoperate/teleop/teleimager && conda run --no-capture-output -n tv python -m teleimager.image_server
+```
+
+一句话：如果相机能被 `lsusb` 识别但没有 `/dev/video*`，重新绑定 UVC 驱动。
+
+```bash
+sudo modprobe -r uvcvideo && sudo modprobe uvcvideo
+```
+
+一句话：检查头部双目和左右腕三路传输源，并把测试图片保存到日志目录。
+
+```bash
+PYTHONPATH=/home/xulinfu/projects/unitree_lerobot_ipc conda run --no-capture-output -n unitree_lerobot python -m unitree_lerobot.eval_robot.tests.test_camera --image-host 192.168.2.170 --frames 90 --timeout 5 --save-dir /home/xulinfu/projects/RoboTwin/real_robot/g1_act/logs/camera_check
+```
+
+一句话：在 `DISPLAY=:1` 上显示实时相机画面，窗口聚焦后按 `q` 退出。
+
+```bash
+export DISPLAY=:1; PYTHONPATH=/home/xulinfu/projects/unitree_lerobot_ipc conda run --no-capture-output -n unitree_lerobot python -m unitree_lerobot.eval_robot.tests.test_camera --image-host 192.168.2.170 --frames 100000000 --timeout 5 --show
+```
+
+一句话：只订阅 G1 和双 Dex3 状态，不创建 command publisher。
+
+```bash
+PYTHONPATH=/home/xulinfu/projects/unitree_lerobot_ipc conda run --no-capture-output -n unitree_lerobot python -m unitree_lerobot.eval_robot.tests.test_dds_readonly --network-interface enx6c1ff7df9277 --timeout 10
+```
+
+正确的 DDS 结果必须包含：
+
+```text
+DDS_READ_ONLY_OK
+mode_machine = 5
+finite = True
+```
+
+一句话：确认没有旧的 ACT、replay 或遥操控制进程。
+
+```bash
+ps -eo pid,etimes,cmd | rg -i 'eval_g1\.py|replay_robot\.py|teleop_hand_and_arm\.py|deploy_g1_act\.py'
+```
+
+一句话：需要终止 ACT 或 replay 时先发送 `SIGINT`，紧急情况优先使用实体急停。
+
+```bash
+pkill -INT -f 'eval_g1\.py|replay_robot\.py'
+```
+
+## 3. ACT 真机部署的统一交互流程
+
+1. 启动命令后，控制器只保持机器人当前实测姿态。
+2. 输入精确文本 `INITIALIZE`，机器人用 20 秒插值到数据集起始姿态。
+3. 初始化完成后，按照训练数据布置物体。
+4. 输入精确文本 `START ACT`，策略开始闭环执行。
+5. 输入其他内容会退出；执行中可按 `Ctrl+C`，紧急情况使用实体急停。
+6. Pouring 最长执行 20 秒；BlockStacking 最长执行 40 秒。
+
+## 4. Pouring ACT 命令
+
+一句话：运行 Pouring MV，输入为状态、左右头部和左右腕部共四路图像。
+
+```bash
+PYTHONPATH=/home/xulinfu/projects/unitree_lerobot_ipc conda run --no-capture-output -n unitree_lerobot python /home/xulinfu/projects/unitree_lerobot_ipc/unitree_lerobot/eval_robot/eval_g1.py --policy.path=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/outputs/act_pouring_mv_seed1000_100k/checkpoints/100000/pretrained_model --policy.device=cuda:0 --policy.n_action_steps=10 --repo_id=local/pouring_mv311_clean --root=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/data/lerobot/pouring_mv311_clean --dataset_tolerance_s=0.001 --frequency=30 --arm=G1_29 --ee=dex3 --base_type=legs --image_host=192.168.2.170 --network_interface=enx6c1ff7df9277 --motion=true --required_mode_machine=5 --init_duration=20 --max_duration=20 --max_arm_step=0.03 --max_ee_step=0.05 --visualization=false --send_real_robot=true
+```
+
+一句话：运行 Pouring HO，输入为状态和 `cam_left_high`。
+
+```bash
+PYTHONPATH=/home/xulinfu/projects/unitree_lerobot_ipc conda run --no-capture-output -n unitree_lerobot python /home/xulinfu/projects/unitree_lerobot_ipc/unitree_lerobot/eval_robot/eval_g1.py --policy.path=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/outputs/act_pouring_ho_seed1000_100k/checkpoints/100000/pretrained_model --policy.device=cuda:0 --policy.n_action_steps=10 --repo_id=local/pouring_ho311_clean --root=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/data/lerobot/pouring_ho311_clean --dataset_tolerance_s=0.001 --frequency=30 --arm=G1_29 --ee=dex3 --base_type=legs --image_host=192.168.2.170 --network_interface=enx6c1ff7df9277 --motion=true --required_mode_machine=5 --init_duration=20 --max_duration=20 --max_arm_step=0.03 --max_ee_step=0.05 --visualization=false --send_real_robot=true
+```
+
+## 5. BlockStacking ACT 命令
+
+一句话：运行 BlockStacking MV，完整任务最长执行 40 秒。
+
+```bash
+PYTHONPATH=/home/xulinfu/projects/unitree_lerobot_ipc conda run --no-capture-output -n unitree_lerobot python /home/xulinfu/projects/unitree_lerobot_ipc/unitree_lerobot/eval_robot/eval_g1.py --policy.path=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/outputs/act_blockstacking_mv_seed1000_100k/checkpoints/100000/pretrained_model --policy.device=cuda:0 --policy.n_action_steps=10 --repo_id=local/g1_dex3_blockstacking_mv --root=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/data/source/G1_Dex3_BlockStacking_Dataset --dataset_tolerance_s=0.001 --frequency=30 --arm=G1_29 --ee=dex3 --base_type=legs --image_host=192.168.2.170 --network_interface=enx6c1ff7df9277 --motion=true --required_mode_machine=5 --init_duration=20 --max_duration=40 --max_arm_step=0.03 --max_ee_step=0.05 --visualization=false --send_real_robot=true
+```
+
+一句话：运行 BlockStacking HO，完整任务最长执行 40 秒。
+
+```bash
+PYTHONPATH=/home/xulinfu/projects/unitree_lerobot_ipc conda run --no-capture-output -n unitree_lerobot python /home/xulinfu/projects/unitree_lerobot_ipc/unitree_lerobot/eval_robot/eval_g1.py --policy.path=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/outputs/act_blockstacking_ho_seed1000_100k/checkpoints/100000/pretrained_model --policy.device=cuda:0 --policy.n_action_steps=10 --repo_id=local/blockstacking_ho301_clean --root=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/data/lerobot/blockstacking_ho301_clean --dataset_tolerance_s=0.001 --frequency=30 --arm=G1_29 --ee=dex3 --base_type=legs --image_host=192.168.2.170 --network_interface=enx6c1ff7df9277 --motion=true --required_mode_machine=5 --init_duration=20 --max_duration=40 --max_arm_step=0.03 --max_ee_step=0.05 --visualization=false --send_real_robot=true
+```
+
+首次测试可以把 `--max_duration` 临时改成 `5` 或 `10`。
+
+## 6. Dataset Replay 的三种含义
+
+### 6.1 只看录制的四路相机画面
+
+这种 replay 不加载模型、不连接 DDS、不会控制机器人；按 `q` 退出，使用 `--episode=N` 切换轨迹。
+
+一句话：在 `DISPLAY=:1` 上查看 Pouring 第 0 条 episode 的同步四路图像。
+
+```bash
+export DISPLAY=:1; PYTHONPATH=/home/xulinfu/projects/unitree_lerobot_ipc conda run --no-capture-output -n unitree_lerobot python /home/xulinfu/projects/unitree_lerobot_ipc/unitree_lerobot/eval_robot/view_dataset_episode.py --repo-id local/pouring_mv311_clean --root /home/xulinfu/projects/RoboTwin/real_robot/g1_act/data/lerobot/pouring_mv311_clean --episode 0 --tolerance-s 0.001 --speed 1
+```
+
+一句话：在 `DISPLAY=:1` 上查看 BlockStacking 第 0 条 episode 的同步四路图像。
+
+```bash
+export DISPLAY=:1; PYTHONPATH=/home/xulinfu/projects/unitree_lerobot_ipc conda run --no-capture-output -n unitree_lerobot python /home/xulinfu/projects/unitree_lerobot_ipc/unitree_lerobot/eval_robot/view_dataset_episode.py --repo-id local/g1_dex3_blockstacking_mv --root /home/xulinfu/projects/RoboTwin/real_robot/g1_act/data/source/G1_Dex3_BlockStacking_Dataset --episode 0 --tolerance-s 0.001 --speed 1
+```
+
+`--speed 1` 是原速，`--speed 2` 是二倍速；真机 replay 前应先看所选 episode，并记住其初始物体位置和朝向。
+
+### 6.2 离线策略 replay
+
+这种 replay 使用数据集录制图像运行 ACT，把预测动作与 ground-truth 动作作图比较，不连接 DDS、不控制机器人；出现提示后输入 `s`，结果保存为当前目录下的 `figure.png`。
+
+一句话：离线评估 Pouring MV 在第 0 条 episode 上的预测动作。
+
+```bash
+mkdir -p /home/xulinfu/projects/RoboTwin/real_robot/g1_act/logs/dataset_eval/pouring_mv_ep0 && cd /home/xulinfu/projects/RoboTwin/real_robot/g1_act/logs/dataset_eval/pouring_mv_ep0 && MPLBACKEND=Agg PYTHONPATH=/home/xulinfu/projects/unitree_lerobot_ipc conda run --no-capture-output -n unitree_lerobot python /home/xulinfu/projects/unitree_lerobot_ipc/unitree_lerobot/eval_robot/eval_g1_dataset.py --policy.path=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/outputs/act_pouring_mv_seed1000_100k/checkpoints/100000/pretrained_model --policy.device=cuda:0 --policy.n_action_steps=10 --repo_id=local/pouring_mv311_clean --root=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/data/lerobot/pouring_mv311_clean --dataset_tolerance_s=0.001 --episodes=0 --frequency=30 --arm=G1_29 --ee=dex3 --visualization=false --send_real_robot=false
+```
+
+一句话：离线评估 Pouring HO 在第 0 条 episode 上的预测动作。
+
+```bash
+mkdir -p /home/xulinfu/projects/RoboTwin/real_robot/g1_act/logs/dataset_eval/pouring_ho_ep0 && cd /home/xulinfu/projects/RoboTwin/real_robot/g1_act/logs/dataset_eval/pouring_ho_ep0 && MPLBACKEND=Agg PYTHONPATH=/home/xulinfu/projects/unitree_lerobot_ipc conda run --no-capture-output -n unitree_lerobot python /home/xulinfu/projects/unitree_lerobot_ipc/unitree_lerobot/eval_robot/eval_g1_dataset.py --policy.path=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/outputs/act_pouring_ho_seed1000_100k/checkpoints/100000/pretrained_model --policy.device=cuda:0 --policy.n_action_steps=10 --repo_id=local/pouring_ho311_clean --root=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/data/lerobot/pouring_ho311_clean --dataset_tolerance_s=0.001 --episodes=0 --frequency=30 --arm=G1_29 --ee=dex3 --visualization=false --send_real_robot=false
+```
+
+一句话：离线评估 BlockStacking MV 在第 0 条 episode 上的预测动作。
+
+```bash
+mkdir -p /home/xulinfu/projects/RoboTwin/real_robot/g1_act/logs/dataset_eval/blockstacking_mv_ep0 && cd /home/xulinfu/projects/RoboTwin/real_robot/g1_act/logs/dataset_eval/blockstacking_mv_ep0 && MPLBACKEND=Agg PYTHONPATH=/home/xulinfu/projects/unitree_lerobot_ipc conda run --no-capture-output -n unitree_lerobot python /home/xulinfu/projects/unitree_lerobot_ipc/unitree_lerobot/eval_robot/eval_g1_dataset.py --policy.path=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/outputs/act_blockstacking_mv_seed1000_100k/checkpoints/100000/pretrained_model --policy.device=cuda:0 --policy.n_action_steps=10 --repo_id=local/g1_dex3_blockstacking_mv --root=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/data/source/G1_Dex3_BlockStacking_Dataset --dataset_tolerance_s=0.001 --episodes=0 --frequency=30 --arm=G1_29 --ee=dex3 --visualization=false --send_real_robot=false
+```
+
+一句话：离线评估 BlockStacking HO 在第 0 条 episode 上的预测动作。
+
+```bash
+mkdir -p /home/xulinfu/projects/RoboTwin/real_robot/g1_act/logs/dataset_eval/blockstacking_ho_ep0 && cd /home/xulinfu/projects/RoboTwin/real_robot/g1_act/logs/dataset_eval/blockstacking_ho_ep0 && MPLBACKEND=Agg PYTHONPATH=/home/xulinfu/projects/unitree_lerobot_ipc conda run --no-capture-output -n unitree_lerobot python /home/xulinfu/projects/unitree_lerobot_ipc/unitree_lerobot/eval_robot/eval_g1_dataset.py --policy.path=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/outputs/act_blockstacking_ho_seed1000_100k/checkpoints/100000/pretrained_model --policy.device=cuda:0 --policy.n_action_steps=10 --repo_id=local/blockstacking_ho301_clean --root=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/data/lerobot/blockstacking_ho301_clean --dataset_tolerance_s=0.001 --episodes=0 --frequency=30 --arm=G1_29 --ee=dex3 --visualization=false --send_real_robot=false
+```
+
+### 6.3 在真机上 replay 数据集动作
+
+真机 dataset replay 不使用 ACT，也不读取当前相机来修正动作；它只是以 30 Hz 开环发送所选 episode 的 ground-truth 动作，因此只能用来验证记录轨迹和机器人接口，不能验证视觉泛化。
+
+真机 replay 的统一交互流程：
+
+1. 先用 6.1 的画面播放器查看同一个 `--episode=N`。
+2. 确认网卡、DDS、常规运控模式和急停。
+3. 启动 replay 后输入精确文本 `INITIALIZE`，机器人用 20 秒进入完整双臂双手起始姿态。
+4. 按照该 episode 第一帧摆放物体。
+5. 输入精确文本 `START REPLAY`，开始发送录制动作。
+6. replay 不会根据物体实际位置修正，场景不匹配时不要启动。
+
+一句话：在真机上开环 replay Pouring 第 0 条 episode，最长执行 20 秒。
+
+```bash
+PYTHONPATH=/home/xulinfu/projects/unitree_lerobot_ipc conda run --no-capture-output -n unitree_lerobot python /home/xulinfu/projects/unitree_lerobot_ipc/unitree_lerobot/eval_robot/replay_robot.py --repo_id=local/pouring_mv311_clean --root=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/data/lerobot/pouring_mv311_clean --dataset_tolerance_s=0.001 --episodes=0 --frequency=30 --arm=G1_29 --ee=dex3 --base_type=legs --image_host=192.168.2.170 --network_interface=enx6c1ff7df9277 --motion=true --required_mode_machine=5 --init_duration=20 --max_duration=20 --max_arm_step=0.03 --max_ee_step=0.05 --visualization=false --send_real_robot=true
+```
+
+一句话：在真机上开环 replay BlockStacking 第 0 条 episode，最长执行 40 秒。
+
+```bash
+PYTHONPATH=/home/xulinfu/projects/unitree_lerobot_ipc conda run --no-capture-output -n unitree_lerobot python /home/xulinfu/projects/unitree_lerobot_ipc/unitree_lerobot/eval_robot/replay_robot.py --repo_id=local/g1_dex3_blockstacking_mv --root=/home/xulinfu/projects/RoboTwin/real_robot/g1_act/data/source/G1_Dex3_BlockStacking_Dataset --dataset_tolerance_s=0.001 --episodes=0 --frequency=30 --arm=G1_29 --ee=dex3 --base_type=legs --image_host=192.168.2.170 --network_interface=enx6c1ff7df9277 --motion=true --required_mode_machine=5 --init_duration=20 --max_duration=40 --max_arm_step=0.03 --max_ee_step=0.05 --visualization=false --send_real_robot=true
+```
+
+修改 `--episodes=0` 即可选择其他轨迹；程序启动时会打印所选 episode 的帧数和时长，`--max_duration` 小于该时长时会提前停止。
+
+## 7. 常见问题
+
+### `unrecognized arguments` 后面出现空白字符
+
+原因通常是复制时混入 Unicode 行分隔符 `U+2028`；删除异常空白，优先复制本笔记中的单行命令。
+
+### `No module named casadi`
+
+官方 IK 需要 Pinocchio 和 CasADi；当前 `unitree_lerobot` 环境已安装 `pinocchio 4.1.0` 和 `casadi 3.7.2`。
+
+### 模型像机械重复轨迹
+
+checkpoint 原始 `n_action_steps=100` 会连续约 3.33 秒不重新看图；本笔记统一使用 `--policy.n_action_steps=10`。
+
+### 改变训练 step 能否解决相机差异
+
+不能；ACT 不接收相机 FOV/内参，只看像素。相机 FOV、安装角度、桌面距离、物体尺寸和光照与训练数据不同时，应先复现官方场景，或固定当前相机后采集本地数据微调。
+
+### Dataset replay 与 ACT 部署的区别
+
+- ACT 部署：根据当前实时图像和机器人状态预测动作，但受训练分布限制。
+- 离线策略 replay：使用数据集图像预测，不控制机器人。
+- 真机 dataset replay：直接发送录制动作，不使用当前图像，是开环轨迹复现。
